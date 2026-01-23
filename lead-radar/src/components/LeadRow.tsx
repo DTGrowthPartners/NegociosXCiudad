@@ -74,7 +74,7 @@ export function LeadRow({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const scoreInfo = getScoreLabel(lead.opportunityScore);
-  const statusConfig = STATUS_CONFIG[lead.status];
+  const statusConfig = STATUS_CONFIG[lead.status as LeadStatus];
 
   const handleStatusChange = async (newStatus: LeadStatus) => {
     setIsUpdating(true);
