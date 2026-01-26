@@ -45,3 +45,5 @@ logs/
 # IDE
 .idea
 .vscode
+
+.vercel

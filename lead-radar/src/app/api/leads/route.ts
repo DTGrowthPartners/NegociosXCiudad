@@ -7,7 +7,6 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('API /api/leads called');
     const searchParams = request.nextUrl.searchParams;
 
     // Parse and validate query parameters
@@ -75,10 +74,8 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    console.log('About to query database');
     // Get total count
     const totalCount = await prisma.lead.count({ where });
-    console.log('Total count:', totalCount);
 
     // Get leads with pagination
     const leads = await prisma.lead.findMany({
