@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Download, RefreshCw } from 'lucide-react';
+import { Download, RefreshCw, Upload } from 'lucide-react';
 import {
   ScrapeForm,
   Filters,
@@ -210,6 +210,32 @@ export default function DashboardPage() {
     }
   };
 
+  // Import CSV
+  const handleImportCSV = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/import', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        addToast(result.message, 'success');
+        // Refresh leads
+        fetchLeads(1);
+      } else {
+        addToast(result.error || 'Error al importar CSV', 'error');
+      }
+    } catch (error) {
+      console.error('Error importing CSV:', error);
+      addToast('Error al importar CSV', 'error');
+    }
+  };
+
   // Handle delete lead
   const handleDelete = async (id: string) => {
     try {
@@ -299,6 +325,21 @@ export default function DashboardPage() {
             <Download className="w-4 h-4" />
             Exportar CSV
           </button>
+          <label className="inline-flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
+            <Upload className="w-4 h-4" />
+            Importar CSV
+            <input
+              type="file"
+              accept=".csv"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  handleImportCSV(file);
+                }
+              }}
+              className="hidden"
+            />
+          </label>
         </div>
       </div>
 
