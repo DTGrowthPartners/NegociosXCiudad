@@ -712,11 +712,27 @@ export async function runScrapeJob(
   totalSaved: number;
   errorsCount: number;
 }> {
+  // Define categories to scrape
+  const categoriesToScrape = category
+    ? [category]
+    : [
+        'Restaurantes',
+        'Cafeterías',
+        'Dentistas',
+        'Gimnasios',
+        'Barberías',
+        'Centros de estética',
+        'Consultorios médicos',
+        'Agencias de viajes',
+        'Fotografía',
+        'Florerías',
+      ];
+
   // Create scrape run record
   const scrapeRun = await prisma.scrapeRun.create({
     data: {
       city,
-      category,
+      category: category || 'Todas las categorías',
       status: 'RUNNING' as ScrapeStatus,
       startedAt: new Date(),
     },
@@ -724,55 +740,72 @@ export async function runScrapeJob(
 
   console.log(`\n🎯 Started scrape run: ${scrapeRun.id}`);
   console.log(`   City: ${city}`);
-  console.log(`   Category: ${category}`);
+  console.log(`   Category: ${category || 'Todas las categorías'}`);
   console.log(`   Limit: ${limit}`);
+  console.log(`   Categories to scrape: ${categoriesToScrape.join(', ')}`);
 
   const scraper = new GoogleMapsScraper();
   let totalSaved = 0;
+  let totalFound = 0;
+  const allErrors: string[] = [];
 
   try {
-    const { businesses, errors, totalFound } = await scraper.scrape(
-      city,
-      category,
-      limit
-    );
+    // Distribute limit among categories
+    const limitPerCategory = category ? limit : Math.max(1, Math.floor(limit / categoriesToScrape.length));
 
-    // Filter out known brands/franchises
-    const filteredBusinesses = businesses.filter((business) => {
-      const matchingBrand = getMatchingBrand(business.businessName, category);
-      if (matchingBrand) {
-        console.log(`   ⏭️ Skipping known brand: ${business.businessName} (matches: ${matchingBrand})`);
-        return false;
-      }
-      return true;
-    });
+    for (const cat of categoriesToScrape) {
+      if (totalSaved >= limit) break; // Stop if we reached the total limit
 
-    const skippedCount = businesses.length - filteredBusinesses.length;
-    console.log(`\n💾 Saving ${filteredBusinesses.length} businesses to database (${skippedCount} known brands skipped)...`);
+      console.log(`\n📂 Scraping category: ${cat}`);
+      const remainingLimit = limit - totalSaved;
+      const categoryLimit = Math.min(limitPerCategory, remainingLimit);
 
-    // Save businesses to database
-    for (const business of filteredBusinesses) {
-      try {
-        const score = calculateOpportunityScore(business);
+      const { businesses, errors, totalFound: catFound } = await scraper.scrape(
+        city,
+        cat,
+        categoryLimit
+      );
 
-        await prisma.lead.create({
-          data: {
-            businessName: business.businessName,
-            city,
-            category,
-            address: business.address,
-            phone: business.phone,
-            websiteUrl: business.websiteUrl,
-            instagramUrl: business.instagramUrl,
-            hasWebsite: !!business.websiteUrl,
-            hasInstagram: !!business.instagramUrl,
-            opportunityScore: score,
-            scrapeRunId: scrapeRun.id,
-          },
-        });
-        totalSaved++;
-      } catch (error) {
-        console.error(`Failed to save business ${business.businessName}:`, error);
+      totalFound += catFound;
+      allErrors.push(...errors.map(e => e.error || String(e)));
+
+      // Filter out known brands/franchises
+      const filteredBusinesses = businesses.filter((business) => {
+        const matchingBrand = getMatchingBrand(business.businessName, cat);
+        if (matchingBrand) {
+          console.log(`   ⏭️ Skipping known brand: ${business.businessName} (matches: ${matchingBrand})`);
+          return false;
+        }
+        return true;
+      });
+
+      const skippedCount = businesses.length - filteredBusinesses.length;
+      console.log(`💾 Saving ${filteredBusinesses.length} businesses to database (${skippedCount} known brands skipped)...`);
+
+      // Save businesses to database
+      for (const business of filteredBusinesses) {
+        try {
+          const score = calculateOpportunityScore(business);
+
+          await prisma.lead.create({
+            data: {
+              businessName: business.businessName,
+              city,
+              category: cat,
+              address: business.address,
+              phone: business.phone,
+              websiteUrl: business.websiteUrl,
+              instagramUrl: business.instagramUrl,
+              hasWebsite: !!business.websiteUrl,
+              hasInstagram: !!business.instagramUrl,
+              opportunityScore: score,
+              scrapeRunId: scrapeRun.id,
+            },
+          });
+          totalSaved++;
+        } catch (error) {
+          console.error(`Failed to save business ${business.businessName}:`, error);
+        }
       }
     }
 
@@ -784,23 +817,22 @@ export async function runScrapeJob(
         finishedAt: new Date(),
         totalFound,
         totalSaved,
-        errorsCount: errors.length,
-        errors: JSON.stringify(errors),
+        errorsCount: allErrors.length,
+        errors: JSON.stringify(allErrors),
       },
     });
 
     console.log(`\n✅ Scrape completed!`);
     console.log(`   Total found: ${totalFound}`);
-    console.log(`   Known brands skipped: ${skippedCount}`);
     console.log(`   Total saved: ${totalSaved}`);
-    console.log(`   Errors: ${errors.length}`);
+    console.log(`   Errors: ${allErrors.length}`);
 
     return {
       success: true,
       scrapeRunId: scrapeRun.id,
       totalFound,
       totalSaved,
-      errorsCount: errors.length,
+      errorsCount: allErrors.length,
     };
   } catch (error) {
     console.error('❌ Scrape failed:', error);
