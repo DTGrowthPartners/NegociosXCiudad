@@ -50,6 +50,7 @@ export default function DashboardPage() {
 
   // Use ref to track if initial load has happened
   const initialLoadDone = useRef(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Fetch leads function
   const fetchLeads = async (currentPage: number) => {
@@ -99,12 +100,12 @@ export default function DashboardPage() {
     setPage(1);
   };
 
-  // Fetch when filters or page change (but not on initial load)
+  // Fetch when filters, page, or refreshKey change (but not on initial load)
   useEffect(() => {
     if (initialLoadDone.current) {
       fetchLeads(page);
     }
-  }, [filters, page]);
+  }, [filters, page, refreshKey]);
 
   // Handle page change
   const handlePageChange = (newPage: number) => {
@@ -288,9 +289,10 @@ export default function DashboardPage() {
     }
   };
 
-  // Handle scrape complete
+  // Handle scrape complete - use state setters (stable refs) to avoid stale closures
   const handleScrapeComplete = () => {
-    fetchLeads(page);
+    setPage(1);
+    setRefreshKey((prev) => prev + 1);
   };
 
   // Manual refresh
