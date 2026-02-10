@@ -699,19 +699,14 @@ export class GoogleMapsScraper {
 }
 
 /**
- * Run scraping job and save results to database
+ * Start scraping job in background. Creates the DB record and returns
+ * the scrapeRunId immediately so the client can poll for status.
  */
-export async function runScrapeJob(
+export async function startScrapeJob(
   city: string,
   category: string,
   limit: number
-): Promise<{
-  success: boolean;
-  scrapeRunId: string;
-  totalFound: number;
-  totalSaved: number;
-  errorsCount: number;
-}> {
+): Promise<string> {
   // Define categories to scrape
   const categoriesToScrape = category
     ? [category]
@@ -744,6 +739,23 @@ export async function runScrapeJob(
   console.log(`   Limit: ${limit}`);
   console.log(`   Categories to scrape: ${categoriesToScrape.join(', ')}`);
 
+  // Run the actual scraping in background (fire and forget)
+  runScrapeJob(scrapeRun.id, city, categoriesToScrape, limit).catch((error) => {
+    console.error('❌ Background scrape job crashed:', error);
+  });
+
+  return scrapeRun.id;
+}
+
+/**
+ * Run scraping job and save results to database (called in background)
+ */
+async function runScrapeJob(
+  scrapeRunId: string,
+  city: string,
+  categoriesToScrape: string[],
+  limit: number
+): Promise<void> {
   const scraper = new GoogleMapsScraper();
   let totalSaved = 0;
   let totalFound = 0;
@@ -751,10 +763,12 @@ export async function runScrapeJob(
 
   try {
     // Distribute limit among categories
-    const limitPerCategory = category ? limit : Math.max(1, Math.floor(limit / categoriesToScrape.length));
+    const limitPerCategory = categoriesToScrape.length === 1
+      ? limit
+      : Math.max(1, Math.floor(limit / categoriesToScrape.length));
 
     for (const cat of categoriesToScrape) {
-      if (totalSaved >= limit) break; // Stop if we reached the total limit
+      if (totalSaved >= limit) break;
 
       console.log(`\n📂 Scraping category: ${cat}`);
       const remainingLimit = limit - totalSaved;
@@ -799,7 +813,7 @@ export async function runScrapeJob(
               hasWebsite: !!business.websiteUrl,
               hasInstagram: !!business.instagramUrl,
               opportunityScore: score,
-              scrapeRunId: scrapeRun.id,
+              scrapeRunId: scrapeRunId,
             },
           });
           totalSaved++;
@@ -807,11 +821,17 @@ export async function runScrapeJob(
           console.error(`Failed to save business ${business.businessName}:`, error);
         }
       }
+
+      // Update progress in DB after each category
+      await prisma.scrapeRun.update({
+        where: { id: scrapeRunId },
+        data: { totalFound, totalSaved, errorsCount: allErrors.length },
+      });
     }
 
-    // Update scrape run with results
+    // Update scrape run with final results
     await prisma.scrapeRun.update({
-      where: { id: scrapeRun.id },
+      where: { id: scrapeRunId },
       data: {
         status: 'SUCCESS' as ScrapeStatus,
         finishedAt: new Date(),
@@ -826,20 +846,11 @@ export async function runScrapeJob(
     console.log(`   Total found: ${totalFound}`);
     console.log(`   Total saved: ${totalSaved}`);
     console.log(`   Errors: ${allErrors.length}`);
-
-    return {
-      success: true,
-      scrapeRunId: scrapeRun.id,
-      totalFound,
-      totalSaved,
-      errorsCount: allErrors.length,
-    };
   } catch (error) {
     console.error('❌ Scrape failed:', error);
 
-    // Update scrape run with failure
     await prisma.scrapeRun.update({
-      where: { id: scrapeRun.id },
+      where: { id: scrapeRunId },
       data: {
         status: 'FAILED' as ScrapeStatus,
         finishedAt: new Date(),
@@ -847,13 +858,5 @@ export async function runScrapeJob(
         errorsCount: 1,
       },
     });
-
-    return {
-      success: false,
-      scrapeRunId: scrapeRun.id,
-      totalFound: 0,
-      totalSaved: 0,
-      errorsCount: 1,
-    };
   }
 }

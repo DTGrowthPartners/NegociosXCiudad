@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Search, Loader2 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -128,6 +128,53 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
   const [category, setCategory] = useState('');
   const [limit, setLimit] = useState(30);
   const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState('');
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPolling = useCallback(() => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+  }, []);
+
+  const pollStatus = useCallback((scrapeRunId: string) => {
+    pollingRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/scrape-runs/${scrapeRunId}`);
+        if (!res.ok) return;
+
+        const data = await res.json();
+
+        if (data.status === 'RUNNING') {
+          setProgress(
+            `Procesando... ${data.totalSaved} negocios guardados`
+          );
+          return;
+        }
+
+        // Finished (SUCCESS or FAILED)
+        stopPolling();
+        setIsLoading(false);
+        setProgress('');
+
+        if (data.status === 'SUCCESS') {
+          onToast(
+            `Scraping completado: ${data.totalSaved} negocios encontrados`,
+            'success'
+          );
+          onScrapeComplete();
+        } else {
+          onToast(
+            `Scraping falló con ${data.errorsCount} error(es)`,
+            'error'
+          );
+        }
+      } catch {
+        // Network error during polling - keep trying
+      }
+    }, 3000);
+  }, [onToast, onScrapeComplete, stopPolling]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,46 +185,30 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
     }
 
     setIsLoading(true);
-    onToast('Iniciando scraping... esto puede tomar varios minutos', 'info');
+    setProgress('Iniciando scraping...');
 
     try {
-      // 10 minutes timeout - scraping can take a long time
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10 * 60 * 1000);
-
       const response = await fetch('/api/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          city,
-          category,
-          limit,
-        }),
-        signal: controller.signal,
+        body: JSON.stringify({ city, category, limit }),
       });
-
-      clearTimeout(timeoutId);
 
       const data = await response.json();
 
       if (response.ok && data.success) {
-        onToast(
-          `Scraping completado: ${data.data.totalSaved} negocios encontrados`,
-          'success'
-        );
-        onScrapeComplete();
+        setProgress('Scraping en progreso...');
+        pollStatus(data.data.scrapeRunId);
       } else {
-        onToast(data.error || 'Error durante el scraping', 'error');
+        onToast(data.error || 'Error al iniciar el scraping', 'error');
+        setIsLoading(false);
+        setProgress('');
       }
     } catch (error) {
       console.error('Scrape error:', error);
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        onToast('El scraping tardó demasiado tiempo (más de 10 minutos). Intenta con un límite menor.', 'error');
-      } else {
-        onToast('Error de conexión durante el scraping. Verifica que el servidor esté corriendo.', 'error');
-      }
-    } finally {
+      onToast('Error de conexión. Verifica que el servidor esté corriendo.', 'error');
       setIsLoading(false);
+      setProgress('');
     }
   };
 
@@ -290,10 +321,12 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
 
       {isLoading && (
         <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-800">
-            El scraping está en progreso. Esto puede tomar varios minutos
-            dependiendo del número de resultados. No cierres esta página.
-          </p>
+          <div className="flex items-center gap-3">
+            <Loader2 className="w-4 h-4 animate-spin text-blue-600 flex-shrink-0" />
+            <p className="text-sm text-blue-800">
+              {progress || 'El scraping está en progreso...'}
+            </p>
+          </div>
         </div>
       )}
     </div>

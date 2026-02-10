@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { scrapeParamsSchema } from '@/lib/validations';
-import { runScrapeJob } from '@/lib/scraper';
+import { startScrapeJob } from '@/lib/scraper';
 
-export const maxDuration = 600; // 10 minutes max
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
@@ -17,24 +16,17 @@ export async function POST(request: NextRequest) {
     console.log(`   Category: ${validated.category}`);
     console.log(`   Limit: ${validated.limit}`);
 
-    // Run the scrape job
-    const result = await runScrapeJob(
+    // Start scrape job in background and return immediately
+    const scrapeRunId = await startScrapeJob(
       validated.city,
       validated.category,
       validated.limit
     );
 
     return NextResponse.json({
-      success: result.success,
-      data: {
-        scrapeRunId: result.scrapeRunId,
-        totalFound: result.totalFound,
-        totalSaved: result.totalSaved,
-        errorsCount: result.errorsCount,
-      },
-      message: result.success
-        ? `Scraping completado: ${result.totalSaved} negocios guardados`
-        : 'Scraping falló - revisa los logs',
+      success: true,
+      data: { scrapeRunId },
+      message: 'Scraping iniciado en segundo plano',
     });
   } catch (error) {
     console.error('Scrape error:', error);
@@ -47,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: 'Failed to run scrape job', details: String(error) },
+      { error: 'Failed to start scrape job', details: String(error) },
       { status: 500 }
     );
   }
