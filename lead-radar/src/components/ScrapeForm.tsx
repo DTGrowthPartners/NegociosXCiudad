@@ -141,6 +141,10 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
     onToast('Iniciando scraping... esto puede tomar varios minutos', 'info');
 
     try {
+      // 10 minutes timeout - scraping can take a long time
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10 * 60 * 1000);
+
       const response = await fetch('/api/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -149,7 +153,10 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
           category,
           limit,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       const data = await response.json();
 
@@ -164,7 +171,11 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
       }
     } catch (error) {
       console.error('Scrape error:', error);
-      onToast('Error de conexión durante el scraping', 'error');
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        onToast('El scraping tardó demasiado tiempo (más de 10 minutos). Intenta con un límite menor.', 'error');
+      } else {
+        onToast('Error de conexión durante el scraping. Verifica que el servidor esté corriendo.', 'error');
+      }
     } finally {
       setIsLoading(false);
     }

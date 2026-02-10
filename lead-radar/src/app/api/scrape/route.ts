@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { scrapeParamsSchema } from '@/lib/validations';
 import { runScrapeJob } from '@/lib/scraper';
 
-export const maxDuration = 300; // 5 minutes max for serverless
+export const maxDuration = 600; // 10 minutes max
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
