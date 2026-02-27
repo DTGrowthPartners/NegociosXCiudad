@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Lead, LeadStatus } from '@/types';
 import { LeadRow } from './LeadRow';
-import { Loader2, Database, Trash2, CheckSquare, Square } from 'lucide-react';
+import { Loader2, Database, Trash2, CheckSquare, Square, RefreshCw } from 'lucide-react';
 
 interface LeadTableProps {
   leads: Lead[];
@@ -14,6 +14,7 @@ interface LeadTableProps {
   onOpenWhatsApp: (lead: Lead) => void;
   onDelete: (id: string) => void;
   onBulkDelete: (ids: string[]) => void;
+  onBulkStatusChange: (ids: string[], status: LeadStatus) => void;
 }
 
 export function LeadTable({
@@ -25,10 +26,12 @@ export function LeadTable({
   onOpenWhatsApp,
   onDelete,
   onBulkDelete,
+  onBulkStatusChange,
 }: LeadTableProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   // Clear selection when leads change
   useEffect(() => {
@@ -63,23 +66,36 @@ export function LeadTable({
     setShowBulkDeleteConfirm(false);
     setIsDeleting(false);
   };
+
+  const handleBulkStatusChange = async (status: LeadStatus) => {
+    setIsUpdatingStatus(true);
+    await onBulkStatusChange(Array.from(selectedIds), status);
+    setSelectedIds(new Set());
+    setIsUpdatingStatus(false);
+  };
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 text-primary-600 animate-spin mb-4" />
-        <p className="text-gray-500">Cargando leads...</p>
+      <div className="flex flex-col items-center justify-center py-16 animate-pulse-soft">
+        <div className="relative">
+          <div className="w-16 h-16 rounded-2xl bg-primary-50 flex items-center justify-center mb-4">
+            <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
+          </div>
+        </div>
+        <p className="text-dark-400 font-medium">Cargando leads...</p>
       </div>
     );
   }
 
   if (leads.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg">
-        <Database className="w-12 h-12 text-gray-300 mb-4" />
-        <h3 className="text-lg font-medium text-gray-700 mb-2">
+      <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-100 shadow-card animate-fade-in-up">
+        <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-4">
+          <Database className="w-8 h-8 text-dark-200" />
+        </div>
+        <h3 className="text-lg font-semibold text-dark-600 mb-1">
           No hay leads para mostrar
         </h3>
-        <p className="text-gray-500 text-center max-w-md">
+        <p className="text-dark-300 text-center max-w-md text-sm">
           Ejecuta un scraping para encontrar negocios o ajusta los filtros si ya
           tienes datos.
         </p>
@@ -90,11 +106,11 @@ export function LeadTable({
   return (
     <div className="space-y-2">
       {/* Selection toolbar */}
-      <div className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between">
+      <div className="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-between shadow-card">
         <div className="flex items-center gap-3">
           <button
             onClick={handleSelectAll}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-dark-500 hover:bg-gray-50 rounded-xl transition-all duration-200"
           >
             {allSelected ? (
               <CheckSquare className="w-5 h-5 text-primary-600" />
@@ -103,53 +119,83 @@ export function LeadTable({
                 <div className="w-2 h-0.5 bg-primary-600" />
               </div>
             ) : (
-              <Square className="w-5 h-5 text-gray-400" />
+              <Square className="w-5 h-5 text-dark-200" />
             )}
-            {allSelected ? 'Deseleccionar todos' : 'Seleccionar todos'}
+            <span className="font-medium">{allSelected ? 'Deseleccionar todos' : 'Seleccionar todos'}</span>
           </button>
           {selectedIds.size > 0 && (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-dark-300 bg-primary-50 px-3 py-1 rounded-full font-medium animate-scale-in">
               {selectedIds.size} seleccionado{selectedIds.size !== 1 ? 's' : ''}
             </span>
           )}
         </div>
 
         {selectedIds.size > 0 && (
-          <button
-            onClick={() => setShowBulkDeleteConfirm(true)}
-            className="flex items-center gap-2 px-4 py-1.5 text-sm text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
-          >
-            <Trash2 className="w-4 h-4" />
-            Eliminar seleccionados ({selectedIds.size})
-          </button>
+          <div className="flex items-center gap-2 animate-fade-in">
+            <select
+              onChange={(e) => {
+                if (e.target.value) handleBulkStatusChange(e.target.value as LeadStatus);
+                e.target.value = '';
+              }}
+              disabled={isUpdatingStatus}
+              className="px-3 py-2 text-sm border border-gray-200 rounded-xl bg-white hover:bg-gray-50 transition-all duration-200 text-dark-500"
+              defaultValue=""
+            >
+              <option value="" disabled>
+                {isUpdatingStatus ? 'Actualizando...' : 'Cambiar estado'}
+              </option>
+              <option value="NEW">Nuevo</option>
+              <option value="CONTACTED">Contactado</option>
+              <option value="REPLIED">Respondió</option>
+              <option value="WON">Ganado</option>
+              <option value="LOST">Perdido</option>
+              <option value="DISCARDED">Descartado</option>
+            </select>
+            <button
+              onClick={() => setShowBulkDeleteConfirm(true)}
+              className="btn-press flex items-center gap-2 px-4 py-2 text-sm text-white bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 rounded-xl transition-all duration-200 shadow-card font-medium"
+            >
+              <Trash2 className="w-4 h-4" />
+              Eliminar ({selectedIds.size})
+            </button>
+          </div>
         )}
       </div>
 
       {/* Bulk delete confirmation modal */}
       {showBulkDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 modal-overlay"
+          onClick={() => !isDeleting && setShowBulkDeleteConfirm(false)}
+        >
+          <div className="bg-white rounded-2xl p-6 max-w-md mx-4 shadow-2xl modal-content border border-gray-100" onClick={(e) => e.stopPropagation()}>
+            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center mb-4">
+              <Trash2 className="w-6 h-6 text-red-500" />
+            </div>
+            <h3 className="text-lg font-bold text-dark-700 mb-2">
               Eliminar {selectedIds.size} lead{selectedIds.size !== 1 ? 's' : ''}
             </h3>
-            <p className="text-gray-600 mb-4">
-              ¿Estás seguro de que quieres eliminar <strong>{selectedIds.size}</strong> lead{selectedIds.size !== 1 ? 's' : ''}? Esta acción no se puede deshacer.
+            <p className="text-dark-400 mb-6 text-sm">
+              ¿Estás seguro de que quieres eliminar <strong className="text-dark-600">{selectedIds.size}</strong> lead{selectedIds.size !== 1 ? 's' : ''}? Esta acción no se puede deshacer.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowBulkDeleteConfirm(false)}
                 disabled={isDeleting}
-                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="px-5 py-2.5 text-dark-500 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all duration-200 font-medium text-sm"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleBulkDelete}
                 disabled={isDeleting}
-                className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-2"
+                className="btn-press px-5 py-2.5 text-white bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 rounded-xl transition-all duration-200 flex items-center gap-2 font-medium text-sm shadow-card"
               >
                 {isDeleting ? (
-                  'Eliminando...'
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Eliminando...
+                  </>
                 ) : (
                   <>
                     <Trash2 className="w-4 h-4" />
@@ -163,18 +209,23 @@ export function LeadTable({
       )}
 
       {/* Lead rows */}
-      {leads.map((lead) => (
-        <LeadRow
+      {leads.map((lead, index) => (
+        <div
           key={lead.id}
-          lead={lead}
-          isSelected={selectedIds.has(lead.id)}
-          onSelect={handleSelectOne}
-          onStatusChange={onStatusChange}
-          onNotesChange={onNotesChange}
-          onCopyMessage={onCopyMessage}
-          onOpenWhatsApp={onOpenWhatsApp}
-          onDelete={onDelete}
-        />
+          className="animate-fade-in-up"
+          style={{ animationDelay: `${Math.min(index * 0.03, 0.3)}s`, opacity: 0 }}
+        >
+          <LeadRow
+            lead={lead}
+            isSelected={selectedIds.has(lead.id)}
+            onSelect={handleSelectOne}
+            onStatusChange={onStatusChange}
+            onNotesChange={onNotesChange}
+            onCopyMessage={onCopyMessage}
+            onOpenWhatsApp={onOpenWhatsApp}
+            onDelete={onDelete}
+          />
+        </div>
       ))}
     </div>
   );

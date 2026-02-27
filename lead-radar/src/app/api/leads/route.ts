@@ -88,8 +88,8 @@ export async function GET(request: NextRequest) {
       take: validated.limit,
     });
 
-    // Get unique cities and categories for filters
-    const [cities, categories] = await Promise.all([
+    // Get unique cities, categories, and global stats in parallel
+    const [cities, categories, highOpportunity, contacted, won] = await Promise.all([
       prisma.lead.findMany({
         select: { city: true },
         distinct: ['city'],
@@ -98,6 +98,9 @@ export async function GET(request: NextRequest) {
         select: { category: true },
         distinct: ['category'],
       }),
+      prisma.lead.count({ where: { ...where, opportunityScore: { gte: 70 } } }),
+      prisma.lead.count({ where: { ...where, status: 'CONTACTED' } }),
+      prisma.lead.count({ where: { ...where, status: 'WON' } }),
     ]);
 
     return NextResponse.json({
@@ -111,6 +114,12 @@ export async function GET(request: NextRequest) {
       filters: {
         cities: cities.map((c) => c.city),
         categories: categories.map((c) => c.category),
+      },
+      stats: {
+        total: totalCount,
+        highOpportunity,
+        contacted,
+        won,
       },
     });
   } catch (error) {

@@ -52,17 +52,17 @@ export function Pagination({
 
   if (totalPages <= 1) {
     return (
-      <div className="text-sm text-gray-500 text-center py-2">
+      <div className="text-sm text-dark-300 text-center py-3 font-medium">
         Mostrando {totalCount} {totalCount === 1 ? 'lead' : 'leads'}
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 bg-white rounded-2xl px-5 shadow-card border border-gray-100">
       {/* Info */}
-      <div className="text-sm text-gray-500">
-        Mostrando {startItem}-{endItem} de {totalCount} leads
+      <div className="text-sm text-dark-400">
+        Mostrando <span className="font-semibold text-dark-600">{startItem}-{endItem}</span> de <span className="font-semibold text-dark-600">{totalCount}</span> leads
       </div>
 
       {/* Page navigation */}
@@ -71,10 +71,10 @@ export function Pagination({
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
           className={clsx(
-            'p-2 rounded-lg transition-colors',
+            'p-2 rounded-xl transition-all duration-200',
             currentPage === 1
-              ? 'text-gray-300 cursor-not-allowed'
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'text-dark-200 cursor-not-allowed'
+              : 'text-dark-500 hover:bg-gray-100 hover:text-dark-700'
           )}
         >
           <ChevronLeft className="w-5 h-5" />
@@ -86,17 +86,17 @@ export function Pagination({
               key={index}
               onClick={() => onPageChange(page)}
               className={clsx(
-                'min-w-[36px] h-9 rounded-lg text-sm font-medium transition-colors',
+                'min-w-[38px] h-10 rounded-xl text-sm font-semibold transition-all duration-200',
                 page === currentPage
-                  ? 'bg-primary-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-glow-blue'
+                  : 'text-dark-400 hover:bg-gray-100 hover:text-dark-700'
               )}
             >
               {page}
             </button>
           ) : (
-            <span key={index} className="px-2 text-gray-400">
-              {page}
+            <span key={index} className="px-1 text-dark-200 select-none">
+              ···
             </span>
           )
         )}
@@ -105,10 +105,10 @@ export function Pagination({
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
           className={clsx(
-            'p-2 rounded-lg transition-colors',
+            'p-2 rounded-xl transition-all duration-200',
             currentPage === totalPages
-              ? 'text-gray-300 cursor-not-allowed'
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'text-dark-200 cursor-not-allowed'
+              : 'text-dark-500 hover:bg-gray-100 hover:text-dark-700'
           )}
         >
           <ChevronRight className="w-5 h-5" />

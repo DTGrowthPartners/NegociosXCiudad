@@ -61,4 +61,4 @@ export interface OutreachMessage {
   whatsappUrl: string | null;
 }
 
-export type MessageTemplate = 'NO_WEBSITE' | 'NO_INSTAGRAM' | 'HIGH_OPPORTUNITY' | 'GENERIC';
+export type MessageTemplate = 'NO_WEBSITE' | 'NO_INSTAGRAM' | 'HIGH_OPPORTUNITY' | 'LOW_OPPORTUNITY' | 'GENERIC';

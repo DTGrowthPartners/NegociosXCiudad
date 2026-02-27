@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
-import { Search, Loader2 } from 'lucide-react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { Search, Loader2, XCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 
 interface ScrapeFormProps {
@@ -130,6 +130,7 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState('');
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const activeScrapeRunId = useRef<string | null>(null);
 
   const stopPolling = useCallback(() => {
     if (pollingRef.current) {
@@ -137,6 +138,13 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
       pollingRef.current = null;
     }
   }, []);
+
+  // Cleanup polling on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      stopPolling();
+    };
+  }, [stopPolling]);
 
   const pollStatus = useCallback((scrapeRunId: string) => {
     pollingRef.current = setInterval(async () => {
@@ -176,6 +184,27 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
     }, 3000);
   }, [onToast, onScrapeComplete, stopPolling]);
 
+  const handleCancel = async () => {
+    const scrapeRunId = activeScrapeRunId.current;
+    if (!scrapeRunId) return;
+
+    try {
+      await fetch(`/api/scrape-runs/${scrapeRunId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'cancel' }),
+      });
+      stopPolling();
+      setIsLoading(false);
+      setProgress('');
+      activeScrapeRunId.current = null;
+      onToast('Scraping cancelado', 'info');
+      onScrapeComplete();
+    } catch {
+      onToast('Error al cancelar el scraping', 'error');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -198,6 +227,7 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
 
       if (response.ok && data.success) {
         setProgress('Scraping en progreso...');
+        activeScrapeRunId.current = data.data.scrapeRunId;
         pollStatus(data.data.scrapeRunId);
       } else {
         onToast(data.error || 'Error al iniciar el scraping', 'error');
@@ -213,18 +243,30 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">
-        Buscar Negocios
-      </h2>
+    <div className="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden">
+      {/* Header with gradient accent */}
+      <div className="relative px-6 pt-6 pb-4">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-600 via-primary-400 to-primary-600 opacity-80" />
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-primary-50">
+            <Search className="w-5 h-5 text-primary-600" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-dark-700">
+              Buscar Negocios
+            </h2>
+            <p className="text-xs text-dark-300">Scraping de Google Maps en tiempo real</p>
+          </div>
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* City */}
           <div>
             <label
               htmlFor="city"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-dark-500 mb-1.5"
             >
               Ciudad
             </label>
@@ -232,7 +274,7 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
               id="city"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors bg-white"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50/50 hover:bg-white text-dark-600"
               disabled={isLoading}
             >
               <option value="">Selecciona una ciudad</option>
@@ -248,7 +290,7 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
           <div>
             <label
               htmlFor="category"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-dark-500 mb-1.5"
             >
               Categoría
             </label>
@@ -256,7 +298,7 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
               id="category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors bg-white"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50/50 hover:bg-white text-dark-600"
               disabled={isLoading}
             >
               <option value="">Todas las categorías</option>
@@ -272,7 +314,7 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
           <div>
             <label
               htmlFor="limit"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-dark-500 mb-1.5"
             >
               Límite de resultados
             </label>
@@ -280,7 +322,7 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
               id="limit"
               value={limit}
               onChange={(e) => setLimit(parseInt(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors bg-white"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50/50 hover:bg-white text-dark-600"
               disabled={isLoading}
             >
               <option value={10}>10 negocios</option>
@@ -298,10 +340,10 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
             type="submit"
             disabled={isLoading || !city || !category}
             className={clsx(
-              'inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium transition-colors',
+              'btn-press inline-flex items-center gap-2 px-7 py-2.5 rounded-xl font-semibold transition-all duration-200 shadow-card hover:shadow-card-hover',
               isLoading || !city || !category
-                ? 'bg-gray-400 cursor-not-allowed text-white'
-                : 'bg-primary-600 hover:bg-primary-700 text-white'
+                ? 'bg-gray-300 cursor-not-allowed text-gray-500'
+                : 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white'
             )}
           >
             {isLoading ? (
@@ -320,12 +362,27 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
       </form>
 
       {isLoading && (
-        <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-          <div className="flex items-center gap-3">
-            <Loader2 className="w-4 h-4 animate-spin text-blue-600 flex-shrink-0" />
-            <p className="text-sm text-blue-800">
-              {progress || 'El scraping está en progreso...'}
-            </p>
+        <div className="mx-6 mb-6 animate-fade-in-up">
+          <div className="p-4 bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl border border-primary-100">
+            {/* Progress bar */}
+            <div className="h-1.5 bg-primary-100 rounded-full overflow-hidden mb-3">
+              <div className="h-full bg-gradient-to-r from-primary-500 to-primary-400 rounded-full progress-shine" style={{ width: '60%' }} />
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Loader2 className="w-5 h-5 animate-spin text-primary-600" />
+                <p className="text-sm font-medium text-dark-600">
+                  {progress || 'El scraping está en progreso...'}
+                </p>
+              </div>
+              <button
+                onClick={handleCancel}
+                className="btn-press inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-all duration-200"
+              >
+                <XCircle className="w-4 h-4" />
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
       )}

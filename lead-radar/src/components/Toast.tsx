@@ -14,12 +14,15 @@ interface ToastProps {
 }
 
 export function Toast({ message, type, onClose, duration = 3000 }: ToastProps) {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    // Trigger entrance animation
+    requestAnimationFrame(() => setIsVisible(true));
+
     const timer = setTimeout(() => {
       setIsVisible(false);
-      setTimeout(onClose, 300); // Wait for animation
+      setTimeout(onClose, 300);
     }, duration);
 
     return () => clearTimeout(timer);
@@ -32,29 +35,46 @@ export function Toast({ message, type, onClose, duration = 3000 }: ToastProps) {
   };
 
   const styles = {
-    success: 'bg-green-50 text-green-800 border-green-200',
-    error: 'bg-red-50 text-red-800 border-red-200',
-    info: 'bg-blue-50 text-blue-800 border-blue-200',
+    success: 'bg-white text-emerald-700 border-emerald-200/60',
+    error: 'bg-white text-red-700 border-red-200/60',
+    info: 'bg-white text-primary-700 border-primary-200/60',
+  };
+
+  const iconBg = {
+    success: 'bg-emerald-50',
+    error: 'bg-red-50',
+    info: 'bg-primary-50',
+  };
+
+  const accentColor = {
+    success: 'bg-emerald-500',
+    error: 'bg-red-500',
+    info: 'bg-primary-500',
   };
 
   return (
     <div
       className={clsx(
-        'fixed bottom-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg transition-all duration-300',
+        'flex items-center gap-3 pl-1 pr-4 py-3 rounded-2xl border shadow-lg backdrop-blur-sm transition-all duration-300 min-w-[300px]',
         styles[type],
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+        isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
       )}
     >
-      {icons[type]}
-      <span className="text-sm font-medium">{message}</span>
+      {/* Accent bar */}
+      <div className={clsx('w-1 h-8 rounded-full ml-2', accentColor[type])} />
+
+      <div className={clsx('p-1.5 rounded-lg', iconBg[type])}>
+        {icons[type]}
+      </div>
+      <span className="text-sm font-medium flex-grow">{message}</span>
       <button
         onClick={() => {
           setIsVisible(false);
           setTimeout(onClose, 300);
         }}
-        className="ml-2 hover:opacity-70"
+        className="ml-1 p-1 hover:bg-gray-100 rounded-lg transition-colors"
       >
-        <X className="w-4 h-4" />
+        <X className="w-3.5 h-3.5 text-dark-300" />
       </button>
     </div>
   );
@@ -74,7 +94,7 @@ interface ToastContainerProps {
 
 export function ToastContainer({ toasts, removeToast }: ToastContainerProps) {
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2.5">
       {toasts.map((toast) => (
         <Toast
           key={toast.id}

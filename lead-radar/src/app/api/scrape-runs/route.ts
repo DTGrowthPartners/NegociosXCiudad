@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       scrapeRuns: scrapeRuns.map((run) => ({
         ...run,
         leadsCount: run._count.leads,
-        errors: run.errors ? JSON.parse(run.errors) : [],
+        errors: (() => { try { return run.errors ? JSON.parse(run.errors) : []; } catch { return []; } })(),
       })),
       pagination: {
         page,

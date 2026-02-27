@@ -13,6 +13,25 @@ if (!fs.existsSync(SCREENSHOTS_DIR)) {
   fs.mkdirSync(SCREENSHOTS_DIR, { recursive: true });
 }
 
+// Consistent modern user-agent for all browser contexts
+const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+
+// In-memory map of active scrape jobs for cancellation
+const activeJobs = new Map<string, AbortController>();
+
+/**
+ * Cancel an active scrape job
+ */
+export function cancelScrapeJob(scrapeRunId: string): boolean {
+  const controller = activeJobs.get(scrapeRunId);
+  if (controller) {
+    controller.abort();
+    activeJobs.delete(scrapeRunId);
+    return true;
+  }
+  return false;
+}
+
 /**
  * Random delay to avoid rate limiting
  */
@@ -62,6 +81,49 @@ function extractInstagramFromHtml(html: string): string | null {
     }
   }
 
+  // Strategy 1.5: Icon-based detection - find <a> tags wrapping Instagram icons
+  const iconChildSelectors = [
+    'i[class*="fa-instagram"]',
+    'i[class*="icon-instagram"]',
+    'span[class*="instagram"]',
+    'img[alt*="instagram" i]',
+    'img[src*="instagram"]',
+  ];
+  for (const childSel of iconChildSelectors) {
+    try {
+      const iconEls = $(childSel);
+      for (let i = 0; i < iconEls.length; i++) {
+        const parentA = $(iconEls[i]).closest('a');
+        if (parentA.length) {
+          const href = parentA.attr('href');
+          if (href && href.includes('instagram.com/')) {
+            const match = href.match(/instagram\.com\/([a-zA-Z0-9_.]{1,30})/i);
+            if (match && match[1] && !excluded.includes(match[1].toLowerCase())) {
+              return `https://www.instagram.com/${match[1]}`;
+            }
+          }
+        }
+      }
+    } catch { continue; }
+  }
+
+  // Also check elements with instagram in class and find their parent <a>
+  try {
+    const igClassEls = $('[class*="instagram"], [class*="insta"]').toArray();
+    for (const el of igClassEls) {
+      const parentA = $(el).closest('a');
+      if (parentA.length) {
+        const href = parentA.attr('href');
+        if (href && href.includes('instagram.com/')) {
+          const match = href.match(/instagram\.com\/([a-zA-Z0-9_.]{1,30})/i);
+          if (match && match[1] && !excluded.includes(match[1].toLowerCase())) {
+            return `https://www.instagram.com/${match[1]}`;
+          }
+        }
+      }
+    }
+  } catch { /* skip */ }
+
   // Strategy 2: Look in meta tags (Open Graph, etc.)
   const metaContent = $('meta[property*="instagram"], meta[name*="instagram"], meta[content*="instagram.com"]').attr('content');
   if (metaContent) {
@@ -97,17 +159,33 @@ function extractInstagramFromHtml(html: string): string | null {
     }
   }
 
-  // Strategy 5: Look for @username patterns that might indicate Instagram
+  // Strategy 5: Look for @username patterns near Instagram context clues
   const bodyText = $('body').text();
-  const atMention = bodyText.match(/@([a-zA-Z0-9_.]{3,30})(?:\s|$|\)|,)/);
-  if (atMention && atMention[1]) {
-    // This is less reliable, so we return it with lower confidence
-    // Only return if it looks like a business handle (not a generic word)
-    const handle = atMention[1].toLowerCase();
-    if (!['gmail', 'hotmail', 'yahoo', 'outlook', 'email', 'correo'].includes(handle)) {
-      // We don't return this as it could be Twitter or other platform
-      // Just log it for debugging
-      console.log(`      (Posible Instagram @${atMention[1]} encontrado en texto)`);
+  const emailDomains = ['gmail', 'hotmail', 'yahoo', 'outlook', 'email', 'correo', 'live', 'icloud', 'protonmail'];
+
+  // Look for @username near words like "instagram", "ig", "síguenos", "follow"
+  const igContextPattern = /(?:instagram|ig|síguenos|siguenos|follow\s*us|nuestro\s*instagram)[^@]{0,30}@([a-zA-Z0-9_.]{3,30})/gi;
+  const contextMatch = bodyText.match(igContextPattern);
+  if (contextMatch) {
+    for (const m of contextMatch) {
+      const userMatch = m.match(/@([a-zA-Z0-9_.]{3,30})/);
+      if (userMatch && userMatch[1] && !emailDomains.includes(userMatch[1].toLowerCase())) {
+        console.log(`      ✓ Found @${userMatch[1]} near Instagram context`);
+        return `https://www.instagram.com/${userMatch[1]}`;
+      }
+    }
+  }
+
+  // Also check reverse: @username followed by Instagram context
+  const reversePattern = /@([a-zA-Z0-9_.]{3,30})[^a-zA-Z0-9]{0,30}(?:instagram|ig\b|en\s*instagram)/gi;
+  const reverseMatch = bodyText.match(reversePattern);
+  if (reverseMatch) {
+    for (const m of reverseMatch) {
+      const userMatch = m.match(/@([a-zA-Z0-9_.]{3,30})/);
+      if (userMatch && userMatch[1] && !emailDomains.includes(userMatch[1].toLowerCase())) {
+        console.log(`      ✓ Found @${userMatch[1]} with Instagram context (reverse)`);
+        return `https://www.instagram.com/${userMatch[1]}`;
+      }
     }
   }
 
@@ -122,32 +200,153 @@ async function fetchInstagramFromWebsite(
   websiteUrl: string
 ): Promise<string | null> {
   try {
-    // First try main page
-    await page.goto(websiteUrl, { waitUntil: 'domcontentloaded', timeout: 10000 });
+    // Load page and wait for JS to render social icons/links
+    await page.goto(websiteUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
+    // Extra wait for JS-rendered content (social widgets, footer icons, etc.)
+    try {
+      await page.waitForLoadState('networkidle', { timeout: 8000 });
+    } catch {
+      // networkidle timeout is OK - page may keep loading analytics
+    }
     await randomDelay(500, 1000);
 
+    // Scroll to bottom to trigger lazy-loaded footer/social content
+    try {
+      await page.evaluate(async () => {
+        window.scrollTo(0, document.body.scrollHeight);
+        await new Promise(r => setTimeout(r, 800));
+      });
+      await page.waitForTimeout(500);
+    } catch {
+      // scroll failed, continue with what we have
+    }
+
+    // Strategy 1: Live DOM evaluation - catches JS-rendered links and icon-based links
+    const igFromDom = await page.evaluate(() => {
+      const excluded = new Set(['explore', 'accounts', 'directory', 'about', 'legal', 'p', 'reel', 'reels', 'stories', 'tv', 'direct']);
+
+      function extractUsername(href: string): string | null {
+        const m = href.match(/instagram\.com\/([a-zA-Z0-9_.]{1,30})/i);
+        if (m && !excluded.has(m[1].toLowerCase())) return m[1];
+        return null;
+      }
+
+      // 1a. Direct href links
+      const igLinks = Array.from(document.querySelectorAll('a[href*="instagram.com"], a[href*="instagr.am"]'));
+      for (let i = 0; i < igLinks.length; i++) {
+        const username = extractUsername(igLinks[i].getAttribute('href') || '');
+        if (username) return `https://www.instagram.com/${username}`;
+      }
+
+      // 1b. Icon-based: links wrapping Instagram icons (FontAwesome, SVG, img)
+      const iconSelectors = [
+        'a:has(i[class*="fa-instagram"])',
+        'a:has(i[class*="icon-instagram"])',
+        'a:has(span[class*="instagram"])',
+        'a:has(svg[data-icon="instagram"])',
+        'a:has(img[alt*="instagram" i])',
+        'a:has(img[src*="instagram"])',
+        'a[class*="instagram"]',
+        'a[aria-label*="instagram" i]',
+        'a[title*="instagram" i]',
+      ];
+      for (let s = 0; s < iconSelectors.length; s++) {
+        try {
+          const els = Array.from(document.querySelectorAll(iconSelectors[s]));
+          for (let i = 0; i < els.length; i++) {
+            const href = els[i].getAttribute('href') || '';
+            if (href.includes('instagram.com')) {
+              const username = extractUsername(href);
+              if (username) return `https://www.instagram.com/${username}`;
+            }
+          }
+        } catch { /* :has() not supported, skip */ }
+      }
+
+      // 1c. Find elements with instagram in class and check their parent <a>
+      const igClassEls = Array.from(document.querySelectorAll('[class*="instagram"], [class*="insta"]'));
+      for (let i = 0; i < igClassEls.length; i++) {
+        const parentA = igClassEls[i].closest('a');
+        if (parentA) {
+          const href = parentA.getAttribute('href') || '';
+          if (href.includes('instagram.com')) {
+            const username = extractUsername(href);
+            if (username) return `https://www.instagram.com/${username}`;
+          }
+        }
+      }
+
+      return null;
+    });
+    if (igFromDom) return igFromDom;
+
+    // Strategy 2: Cheerio fallback (handles JSON-LD, meta tags, @username patterns)
     let html = await page.content();
     let instagram = extractInstagramFromHtml(html);
     if (instagram) return instagram;
 
-    // Strategy 2: Try clicking on contact/about links to find social media
-    const contactLinks = ['contacto', 'contact', 'about', 'nosotros', 'quienes-somos', 'sobre-nosotros'];
-    for (const linkText of contactLinks) {
+    // Strategy 3: Check footer area with expanded selectors
+    const footerSelectors = [
+      'footer',
+      '[id*="footer"]',
+      '[class*="footer"]',
+      '[class*="site-footer"]',
+      '[role="contentinfo"]',
+      '#bottom-bar',
+      '.bottom-bar',
+    ];
+    for (const sel of footerSelectors) {
+      try {
+        const footerEl = page.locator(sel).first();
+        if (await footerEl.isVisible({ timeout: 600 })) {
+          const footerHtml = await footerEl.innerHTML();
+          if (footerHtml) {
+            instagram = extractInstagramFromHtml(footerHtml);
+            if (instagram) return instagram;
+          }
+          break; // found a visible footer, don't check more selectors
+        }
+      } catch { continue; }
+    }
+
+    // Strategy 4: Navigate to contact/social pages
+    const contactHrefs = [
+      'contacto', 'contact', 'about', 'nosotros', 'quienes-somos', 'sobre-nosotros',
+      'redes', 'social', 'redes-sociales', 'sociales', 'enlaces', 'links',
+      'siguenos', 'follow', 'comunidad',
+    ];
+    for (const linkText of contactHrefs) {
       try {
         const link = page.locator(`a[href*="${linkText}"]`).first();
-        if (await link.isVisible({ timeout: 1000 })) {
+        if (await link.isVisible({ timeout: 800 })) {
           await link.click();
-          await randomDelay(1000, 1500);
+          await randomDelay(800, 1200);
           html = await page.content();
           instagram = extractInstagramFromHtml(html);
           if (instagram) return instagram;
-          // Go back to main page
           await page.goBack();
-          await randomDelay(500, 1000);
+          await randomDelay(400, 800);
         }
       } catch {
         continue;
       }
+    }
+
+    // Strategy 5: Try finding links by visible text (for links like <a href="/page-3">Redes Sociales</a>)
+    const textPatterns = ['redes sociales', 'síguenos', 'siguenos', 'follow us', 'social media'];
+    for (const text of textPatterns) {
+      try {
+        const link = page.locator('a:visible').filter({ hasText: new RegExp(text, 'i') }).first();
+        if (await link.isVisible({ timeout: 600 })) {
+          await link.click();
+          await randomDelay(800, 1200);
+          html = await page.content();
+          instagram = extractInstagramFromHtml(html);
+          if (instagram) return instagram;
+          await page.goBack();
+          await randomDelay(400, 800);
+        }
+      } catch { continue; }
     }
 
     return null;
@@ -161,6 +360,21 @@ async function fetchInstagramFromWebsite(
  * Extract Instagram username from various URL formats
  */
 function extractInstagramUsername(text: string): string | null {
+  // First, decode Google redirect URLs (/url?q=https://instagram.com/...)
+  let decoded = text;
+  try {
+    const urlMatch = text.match(/[?&]q=(https?%3A%2F%2F[^&]+)/i);
+    if (urlMatch) {
+      decoded = decodeURIComponent(urlMatch[1]);
+    }
+    // Also handle double-encoded URLs
+    if (decoded.includes('%2F')) {
+      decoded = decodeURIComponent(decoded);
+    }
+  } catch {
+    // decoding failed, use original
+  }
+
   // Patterns to match Instagram URLs and usernames
   const patterns = [
     /instagram\.com\/([a-zA-Z0-9_.]{1,30})\/?(?:\?|$|"|'|<|\s)/i,
@@ -168,10 +382,10 @@ function extractInstagramUsername(text: string): string | null {
     /@([a-zA-Z0-9_.]{1,30})(?:\s|$|"|')/,
   ];
 
-  const excluded = ['explore', 'accounts', 'directory', 'about', 'legal', 'p', 'reel', 'reels', 'stories', 'tv', 'direct', 'lite', 'static', 'developer', 'help', 'privacy', 'terms', 'press', 'api', 'brand', 'blog'];
+  const excluded = ['explore', 'accounts', 'directory', 'about', 'legal', 'p', 'reel', 'reels', 'stories', 'tv', 'direct', 'lite', 'static', 'developer', 'help', 'privacy', 'terms', 'press', 'api', 'brand', 'blog', 'nametag', 'web', 'www', 'share', 'login'];
 
   for (const pattern of patterns) {
-    const match = text.match(pattern);
+    const match = decoded.match(pattern);
     if (match && match[1] && !excluded.includes(match[1].toLowerCase())) {
       return match[1];
     }
@@ -200,16 +414,24 @@ async function searchInstagramMultiStrategy(
     await page.goto(googleUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
     await randomDelay(1500, 2500);
 
-    // Get all href attributes that contain instagram
     const pageHtml = await page.content();
 
-    // Look for Instagram URLs in the HTML
-    const instagramMatches = pageHtml.match(/instagram\.com\/([a-zA-Z0-9_.]{1,30})/gi) || [];
+    // Decode Google redirect URLs first, then search for instagram
+    const allHrefs = pageHtml.match(/href="([^"]*instagram[^"]*)"/gi) || [];
+    for (const hrefAttr of allHrefs) {
+      const username = extractInstagramUsername(hrefAttr);
+      if (username) {
+        console.log(`      ✓ Encontrado via Google site search: @${username}`);
+        return `https://www.instagram.com/${username}`;
+      }
+    }
 
+    // Fallback: raw regex on full HTML
+    const instagramMatches = pageHtml.match(/instagram\.com\/([a-zA-Z0-9_.]{1,30})/gi) || [];
     for (const match of instagramMatches) {
       const username = extractInstagramUsername(match);
       if (username) {
-        console.log(`      ✓ Encontrado via Google site search: @${username}`);
+        console.log(`      ✓ Encontrado via Google site search (html): @${username}`);
         return `https://www.instagram.com/${username}`;
       }
     }
@@ -322,8 +544,7 @@ export class GoogleMapsScraper {
     });
     const context = await this.browser.newContext({
       locale: 'es-CO',
-      userAgent:
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      userAgent: BROWSER_UA,
       viewport: { width: 1280, height: 720 },
     });
     this.page = await context.newPage();
@@ -593,40 +814,135 @@ export class GoogleMapsScraper {
         }
       }
 
-      // Try to find Instagram link on the Maps page
+      // === INSTAGRAM DETECTION (multi-layer) ===
       let instagramUrl: string | null = null;
+
+      // Layer 1: Google Maps social links section
+      // Maps shows social links with data-item-id pattern and also as <a> tags
       try {
-        const igLink = this.page.locator('a[href*="instagram.com"]').first();
-        if (await igLink.isVisible({ timeout: 1000 })) {
-          instagramUrl = await igLink.getAttribute('href');
-          console.log(`      ✓ Found Instagram on Maps page`);
+        // Try specific Maps social link selectors
+        const socialSelectors = [
+          'a[data-item-id*="instagram"]',
+          'a[href*="instagram.com"]',
+          'a[aria-label*="Instagram"]',
+          'a[aria-label*="instagram"]',
+          // Maps uses data-tooltip with social network names
+          'a[data-tooltip*="Instagram"]',
+          'a[data-tooltip*="instagram"]',
+        ];
+
+        for (const sel of socialSelectors) {
+          try {
+            const el = this.page.locator(sel).first();
+            if (await el.isVisible({ timeout: 800 })) {
+              const href = await el.getAttribute('href');
+              if (href && href.includes('instagram.com')) {
+                const match = href.match(/instagram\.com\/([a-zA-Z0-9_.]{1,30})/i);
+                if (match && match[1]) {
+                  instagramUrl = `https://www.instagram.com/${match[1]}`;
+                  console.log(`      ✓ Found Instagram on Maps page: @${match[1]}`);
+                  break;
+                }
+              }
+            }
+          } catch { continue; }
+        }
+
+        // Also scan the full Maps page HTML for instagram URLs (covers all edge cases)
+        if (!instagramUrl) {
+          const mapsHtml = await this.page.content();
+          const mapsIgMatch = mapsHtml.match(/href="[^"]*instagram\.com\/([a-zA-Z0-9_.]{1,30})/i);
+          if (mapsIgMatch && mapsIgMatch[1]) {
+            const excluded = ['explore', 'accounts', 'directory', 'about', 'legal', 'p', 'reel', 'reels', 'stories', 'tv', 'direct'];
+            if (!excluded.includes(mapsIgMatch[1].toLowerCase())) {
+              instagramUrl = `https://www.instagram.com/${mapsIgMatch[1]}`;
+              console.log(`      ✓ Found Instagram in Maps HTML: @${mapsIgMatch[1]}`);
+            }
+          }
         }
       } catch {
-        // Not found on Maps page
+        // Maps page extraction failed
       }
 
-      // If we have a website but no Instagram, try to fetch from website
-      if (websiteUrl && !instagramUrl) {
+      // Layer 2: Business website (if available)
+      if (!instagramUrl && websiteUrl) {
+        let ctx2 = null;
         try {
-          const newPage = await this.browser!.newContext().then((ctx) => ctx.newPage());
+          ctx2 = await this.browser!.newContext({ userAgent: BROWSER_UA });
+          const newPage = await ctx2.newPage();
           instagramUrl = await fetchInstagramFromWebsite(newPage, websiteUrl);
-          await newPage.close();
           if (instagramUrl) {
             console.log(`      ✓ Found Instagram on website`);
           }
         } catch {
           // Could not fetch from website
+        } finally {
+          if (ctx2) await ctx2.close().catch(() => {});
         }
       }
 
-      // If still no Instagram, try multi-strategy search
+      // Layer 3: Check Facebook page for Instagram link
       if (!instagramUrl) {
         try {
-          const searchPage = await this.browser!.newContext().then((ctx) => ctx.newPage());
+          // Look for Facebook link on the Maps page
+          let facebookUrl: string | null = null;
+          const fbSelectors = [
+            'a[data-item-id*="facebook"]',
+            'a[href*="facebook.com"]',
+            'a[aria-label*="Facebook"]',
+          ];
+          for (const sel of fbSelectors) {
+            try {
+              const el = this.page.locator(sel).first();
+              if (await el.isVisible({ timeout: 800 })) {
+                facebookUrl = await el.getAttribute('href');
+                if (facebookUrl) break;
+              }
+            } catch { continue; }
+          }
+          // Also scan Maps HTML for facebook
+          if (!facebookUrl) {
+            const mapsHtml2 = await this.page.content();
+            const fbMatch = mapsHtml2.match(/href="([^"]*facebook\.com\/[^"]+)"/i);
+            if (fbMatch) facebookUrl = fbMatch[1];
+          }
+
+          if (facebookUrl) {
+            console.log(`      🔍 Checking Facebook for Instagram link...`);
+            let ctx3 = null;
+            try {
+              ctx3 = await this.browser!.newContext({ userAgent: BROWSER_UA });
+              const fbPage = await ctx3.newPage();
+              await fbPage.goto(facebookUrl, { waitUntil: 'domcontentloaded', timeout: 12000 });
+              await randomDelay(1000, 1500);
+              const fbHtml = await fbPage.content();
+              const igFromFb = extractInstagramFromHtml(fbHtml);
+              if (igFromFb) {
+                instagramUrl = igFromFb;
+                console.log(`      ✓ Found Instagram via Facebook page`);
+              }
+            } catch {
+              // Facebook page failed
+            } finally {
+              if (ctx3) await ctx3.close().catch(() => {});
+            }
+          }
+        } catch {
+          // Facebook extraction failed
+        }
+      }
+
+      // Layer 4: Multi-strategy search engine search
+      if (!instagramUrl) {
+        let ctx4 = null;
+        try {
+          ctx4 = await this.browser!.newContext({ userAgent: BROWSER_UA });
+          const searchPage = await ctx4.newPage();
           instagramUrl = await searchInstagramMultiStrategy(searchPage, businessName, city);
-          await searchPage.close();
         } catch {
           // Could not search for Instagram
+        } finally {
+          if (ctx4) await ctx4.close().catch(() => {});
         }
       }
 
@@ -739,10 +1055,18 @@ export async function startScrapeJob(
   console.log(`   Limit: ${limit}`);
   console.log(`   Categories to scrape: ${categoriesToScrape.join(', ')}`);
 
+  // Create abort controller for cancellation
+  const abortController = new AbortController();
+  activeJobs.set(scrapeRun.id, abortController);
+
   // Run the actual scraping in background (fire and forget)
-  runScrapeJob(scrapeRun.id, city, categoriesToScrape, limit).catch((error) => {
-    console.error('❌ Background scrape job crashed:', error);
-  });
+  runScrapeJob(scrapeRun.id, city, categoriesToScrape, limit, abortController.signal)
+    .catch((error) => {
+      console.error('❌ Background scrape job crashed:', error);
+    })
+    .finally(() => {
+      activeJobs.delete(scrapeRun.id);
+    });
 
   return scrapeRun.id;
 }
@@ -754,7 +1078,8 @@ async function runScrapeJob(
   scrapeRunId: string,
   city: string,
   categoriesToScrape: string[],
-  limit: number
+  limit: number,
+  signal?: AbortSignal
 ): Promise<void> {
   const scraper = new GoogleMapsScraper();
   let totalSaved = 0;
@@ -769,6 +1094,10 @@ async function runScrapeJob(
 
     for (const cat of categoriesToScrape) {
       if (totalSaved >= limit) break;
+      if (signal?.aborted) {
+        console.log('🛑 Scrape job cancelled by user');
+        break;
+      }
 
       console.log(`\n📂 Scraping category: ${cat}`);
       const remainingLimit = limit - totalSaved;
@@ -796,9 +1125,23 @@ async function runScrapeJob(
       const skippedCount = businesses.length - filteredBusinesses.length;
       console.log(`💾 Saving ${filteredBusinesses.length} businesses to database (${skippedCount} known brands skipped)...`);
 
-      // Save businesses to database
+      // Save businesses to database (with duplicate detection)
       for (const business of filteredBusinesses) {
         try {
+          // Check for duplicates by businessName + city + category
+          const existing = await prisma.lead.findFirst({
+            where: {
+              businessName: business.businessName,
+              city,
+              category: cat,
+            },
+          });
+
+          if (existing) {
+            console.log(`   ⏭️ Duplicate skipped: ${business.businessName}`);
+            continue;
+          }
+
           const score = calculateOpportunityScore(business);
 
           await prisma.lead.create({
@@ -830,19 +1173,24 @@ async function runScrapeJob(
     }
 
     // Update scrape run with final results
+    const wasCancelled = signal?.aborted;
     await prisma.scrapeRun.update({
       where: { id: scrapeRunId },
       data: {
-        status: 'SUCCESS' as ScrapeStatus,
+        status: (wasCancelled ? 'FAILED' : 'SUCCESS') as ScrapeStatus,
         finishedAt: new Date(),
         totalFound,
         totalSaved,
         errorsCount: allErrors.length,
-        errors: JSON.stringify(allErrors),
+        errors: JSON.stringify(wasCancelled ? [...allErrors, 'Cancelado por el usuario'] : allErrors),
       },
     });
 
-    console.log(`\n✅ Scrape completed!`);
+    if (wasCancelled) {
+      console.log(`\n🛑 Scrape cancelled!`);
+    } else {
+      console.log(`\n✅ Scrape completed!`);
+    }
     console.log(`   Total found: ${totalFound}`);
     console.log(`   Total saved: ${totalSaved}`);
     console.log(`   Errors: ${allErrors.length}`);

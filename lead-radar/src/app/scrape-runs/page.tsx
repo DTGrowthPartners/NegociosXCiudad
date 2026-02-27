@@ -100,27 +100,27 @@ function ScrapeRunCard({ run }: { run: ScrapeRun }) {
   const Icon = config.icon;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden card-hover">
       {/* Main row */}
-      <div className="p-4">
+      <div className="p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {/* Status icon */}
-            <div className={clsx('p-2 rounded-lg', config.bgColor)}>
+            <div className={clsx('p-2.5 rounded-xl', config.bgColor)}>
               <Icon className={clsx('w-5 h-5', config.color, config.iconClass)} />
             </div>
 
             {/* Info */}
             <div>
-              <h3 className="font-medium text-gray-900">
+              <h3 className="font-bold text-dark-700">
                 {run.category} en {run.city}
               </h3>
-              <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
+              <div className="flex items-center gap-3 text-sm text-dark-300 mt-1">
                 <span className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
+                  <Clock className="w-3.5 h-3.5" />
                   {formatDate(run.startedAt)}
                 </span>
-                <span className="text-gray-300">|</span>
+                <span className="text-dark-200">·</span>
                 <span>Duración: {formatDuration(run.startedAt, run.finishedAt)}</span>
               </div>
             </div>
@@ -129,31 +129,31 @@ function ScrapeRunCard({ run }: { run: ScrapeRun }) {
           {/* Stats & actions */}
           <div className="flex items-center gap-6">
             <div className="text-right">
-              <p className="text-lg font-semibold text-gray-900">
+              <p className="text-lg font-bold text-dark-700">
                 {run.totalSaved}
               </p>
-              <p className="text-xs text-gray-500">guardados</p>
+              <p className="text-[11px] text-dark-300 font-medium">guardados</p>
             </div>
 
             <div className="text-right">
-              <p className="text-lg font-semibold text-gray-900">
+              <p className="text-lg font-bold text-dark-700">
                 {run.totalFound}
               </p>
-              <p className="text-xs text-gray-500">encontrados</p>
+              <p className="text-[11px] text-dark-300 font-medium">encontrados</p>
             </div>
 
             {run.errorsCount > 0 && (
               <div className="text-right">
-                <p className="text-lg font-semibold text-red-600">
+                <p className="text-lg font-bold text-red-600">
                   {run.errorsCount}
                 </p>
-                <p className="text-xs text-gray-500">errores</p>
+                <p className="text-[11px] text-dark-300 font-medium">errores</p>
               </div>
             )}
 
             <span
               className={clsx(
-                'px-3 py-1 rounded-full text-xs font-medium',
+                'px-3 py-1.5 rounded-xl text-[11px] font-semibold',
                 config.bgColor,
                 config.color
               )}
@@ -163,13 +163,11 @@ function ScrapeRunCard({ run }: { run: ScrapeRun }) {
 
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              className="p-2 text-dark-300 hover:text-dark-500 hover:bg-gray-50 rounded-xl transition-all duration-200"
             >
-              {isExpanded ? (
-                <ChevronUp className="w-5 h-5" />
-              ) : (
+              <div className={clsx('transition-transform duration-300', isExpanded ? 'rotate-180' : 'rotate-0')}>
                 <ChevronDown className="w-5 h-5" />
-              )}
+              </div>
             </button>
           </div>
         </div>
@@ -177,31 +175,31 @@ function ScrapeRunCard({ run }: { run: ScrapeRun }) {
 
       {/* Expanded details */}
       {isExpanded && (
-        <div className="px-4 pb-4 pt-2 border-t border-gray-100 bg-gray-50">
+        <div className="px-5 pb-5 pt-3 border-t border-gray-100 bg-gradient-to-b from-gray-50/80 to-white animate-fade-in-down">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Details */}
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-700">Detalles</h4>
-              <div className="bg-white rounded-lg p-3 text-sm space-y-1">
+              <h4 className="text-[11px] font-semibold text-dark-300 uppercase tracking-wider">Detalles</h4>
+              <div className="bg-white rounded-xl p-4 text-sm space-y-2 border border-gray-100">
                 <p>
-                  <span className="text-gray-500">ID:</span>{' '}
-                  <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">
+                  <span className="text-dark-300">ID:</span>{' '}
+                  <code className="text-xs bg-gray-50 px-2 py-0.5 rounded-lg text-dark-500 font-mono">
                     {run.id}
                   </code>
                 </p>
                 <p>
-                  <span className="text-gray-500">Inicio:</span>{' '}
-                  {formatDate(run.startedAt)}
+                  <span className="text-dark-300">Inicio:</span>{' '}
+                  <span className="text-dark-600">{formatDate(run.startedAt)}</span>
                 </p>
                 {run.finishedAt && (
                   <p>
-                    <span className="text-gray-500">Fin:</span>{' '}
-                    {formatDate(run.finishedAt)}
+                    <span className="text-dark-300">Fin:</span>{' '}
+                    <span className="text-dark-600">{formatDate(run.finishedAt)}</span>
                   </p>
                 )}
                 <p>
-                  <span className="text-gray-500">Leads vinculados:</span>{' '}
-                  {run.leadsCount}
+                  <span className="text-dark-300">Leads vinculados:</span>{' '}
+                  <span className="font-semibold text-dark-600">{run.leadsCount}</span>
                 </p>
               </div>
             </div>
@@ -209,23 +207,23 @@ function ScrapeRunCard({ run }: { run: ScrapeRun }) {
             {/* Errors */}
             {run.errors && run.errors.length > 0 && (
               <div className="space-y-2">
-                <h4 className="text-sm font-medium text-gray-700 flex items-center gap-1">
-                  <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                <h4 className="text-[11px] font-semibold text-dark-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
                   Errores ({run.errors.length})
                 </h4>
-                <div className="bg-white rounded-lg p-3 max-h-40 overflow-y-auto">
+                <div className="bg-white rounded-xl p-4 max-h-40 overflow-y-auto border border-gray-100">
                   <ul className="space-y-2 text-sm">
                     {run.errors.map((error, index) => (
                       <li
                         key={index}
-                        className="border-l-2 border-red-300 pl-2 py-1"
+                        className="border-l-2 border-red-300 pl-3 py-1"
                       >
                         {error.business && (
-                          <span className="font-medium text-gray-700">
+                          <span className="font-semibold text-dark-600">
                             {error.business}:{' '}
                           </span>
                         )}
-                        <span className="text-gray-600">{error.error}</span>
+                        <span className="text-dark-400">{error.error}</span>
                       </li>
                     ))}
                   </ul>
@@ -275,19 +273,19 @@ export default function ScrapeRunsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between animate-fade-in-down">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold gradient-text tracking-tight">
             Historial de Scraping
           </h1>
-          <p className="text-gray-500">
+          <p className="text-dark-400 mt-1">
             Revisa las ejecuciones anteriores y sus resultados
           </p>
         </div>
 
         <button
           onClick={fetchScrapeRuns}
-          className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          className="btn-press inline-flex items-center gap-2 px-4 py-2.5 text-dark-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 shadow-card hover:shadow-card-hover"
         >
           <RefreshCw className="w-4 h-4" />
           Actualizar
@@ -296,50 +294,60 @@ export default function ScrapeRunsPage() {
 
       {/* Content */}
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-primary-600 animate-spin mb-4" />
-          <p className="text-gray-500">Cargando historial...</p>
+        <div className="flex flex-col items-center justify-center py-16 animate-pulse-soft">
+          <div className="w-16 h-16 rounded-2xl bg-primary-50 flex items-center justify-center mb-4">
+            <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
+          </div>
+          <p className="text-dark-400 font-medium">Cargando historial...</p>
         </div>
       ) : scrapeRuns.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 bg-white rounded-xl border border-gray-200">
-          <Clock className="w-12 h-12 text-gray-300 mb-4" />
-          <h3 className="text-lg font-medium text-gray-700 mb-2">
+        <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-100 shadow-card animate-fade-in-up">
+          <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-4">
+            <Clock className="w-8 h-8 text-dark-200" />
+          </div>
+          <h3 className="text-lg font-semibold text-dark-600 mb-1">
             No hay ejecuciones registradas
           </h3>
-          <p className="text-gray-500 text-center max-w-md">
+          <p className="text-dark-300 text-center max-w-md text-sm">
             Cuando ejecutes un scraping desde el dashboard, aparecerá aquí el
             historial.
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {scrapeRuns.map((run) => (
-            <ScrapeRunCard key={run.id} run={run} />
+        <div className="space-y-3">
+          {scrapeRuns.map((run, index) => (
+            <div
+              key={run.id}
+              className="animate-fade-in-up"
+              style={{ animationDelay: `${Math.min(index * 0.05, 0.3)}s`, opacity: 0 }}
+            >
+              <ScrapeRunCard run={run} />
+            </div>
           ))}
         </div>
       )}
 
       {/* Pagination */}
       {!isLoading && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-3 bg-white rounded-2xl px-5 py-3 shadow-card border border-gray-100 animate-fade-in">
           <button
             onClick={() =>
               setPagination((prev) => ({ ...prev, page: prev.page - 1 }))
             }
             disabled={pagination.page === 1}
-            className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium text-dark-500 hover:bg-gray-50 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
           >
             Anterior
           </button>
-          <span className="text-sm text-gray-500">
-            Página {pagination.page} de {pagination.totalPages}
+          <span className="text-sm text-dark-400">
+            Página <span className="font-semibold text-dark-600">{pagination.page}</span> de <span className="font-semibold text-dark-600">{pagination.totalPages}</span>
           </span>
           <button
             onClick={() =>
               setPagination((prev) => ({ ...prev, page: prev.page + 1 }))
             }
             disabled={pagination.page === pagination.totalPages}
-            className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium text-dark-500 hover:bg-gray-50 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
           >
             Siguiente
           </button>

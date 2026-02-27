@@ -26,6 +26,12 @@ interface LeadsResponse {
     cities: string[];
     categories: string[];
   };
+  stats: {
+    total: number;
+    highOpportunity: number;
+    contacted: number;
+    won: number;
+  };
 }
 
 export default function DashboardPage() {
@@ -38,6 +44,7 @@ export default function DashboardPage() {
   const limit = 20;
   const [availableCities, setAvailableCities] = useState<string[]>([]);
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [stats, setStats] = useState({ total: 0, highOpportunity: 0, contacted: 0, won: 0 });
   const [filters, setFilters] = useState({
     status: 'ALL',
     minScore: '',
@@ -78,6 +85,7 @@ export default function DashboardPage() {
       setTotalPages(data.pagination.totalPages);
       setAvailableCities(data.filters.cities);
       setAvailableCategories(data.filters.categories);
+      setStats(data.stats);
     } catch (error) {
       console.error('Error fetching leads:', error);
       addToast('Error al cargar leads', 'error');
@@ -289,6 +297,41 @@ export default function DashboardPage() {
     }
   };
 
+  // Handle bulk status change
+  const handleBulkStatusChange = async (ids: string[], status: LeadStatus) => {
+    let updatedCount = 0;
+    let errorCount = 0;
+
+    for (const id of ids) {
+      try {
+        const response = await fetch(`/api/leads/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status }),
+        });
+
+        if (response.ok) {
+          updatedCount++;
+        } else {
+          errorCount++;
+        }
+      } catch {
+        errorCount++;
+      }
+    }
+
+    // Update local state
+    setLeads((prev) =>
+      prev.map((lead) => (ids.includes(lead.id) ? { ...lead, status } : lead))
+    );
+
+    if (errorCount === 0) {
+      addToast(`${updatedCount} leads actualizados a ${status}`, 'success');
+    } else {
+      addToast(`${updatedCount} actualizados, ${errorCount} errores`, 'error');
+    }
+  };
+
   // Handle scrape complete - use state setters (stable refs) to avoid stale closures
   const handleScrapeComplete = () => {
     setPage(1);
@@ -303,10 +346,10 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-in-down">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500">
+          <h1 className="text-3xl font-bold gradient-text tracking-tight">Dashboard</h1>
+          <p className="text-dark-400 mt-1">
             Encuentra negocios sin presencia web y genera oportunidades
           </p>
         </div>
@@ -314,20 +357,20 @@ export default function DashboardPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={handleRefresh}
-            className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="btn-press inline-flex items-center gap-2 px-4 py-2.5 text-dark-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 shadow-card hover:shadow-card-hover"
           >
             <RefreshCw className="w-4 h-4" />
             Actualizar
           </button>
           <button
             onClick={handleExportCSV}
-            disabled={leads.length === 0}
-            className="inline-flex items-center gap-2 px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={totalCount === 0}
+            className="btn-press inline-flex items-center gap-2 px-4 py-2.5 text-white bg-gradient-to-r from-green-600 to-green-500 rounded-xl hover:from-green-700 hover:to-green-600 transition-all duration-200 shadow-card hover:shadow-card-hover disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Download className="w-4 h-4" />
             Exportar CSV
           </button>
-          <label className="inline-flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
+          <label className="btn-press inline-flex items-center gap-2 px-4 py-2.5 text-white bg-gradient-to-r from-primary-600 to-primary-500 rounded-xl hover:from-primary-700 hover:to-primary-600 transition-all duration-200 cursor-pointer shadow-card hover:shadow-card-hover">
             <Upload className="w-4 h-4" />
             Importar CSV
             <input
@@ -346,43 +389,54 @@ export default function DashboardPage() {
       </div>
 
       {/* Scrape form */}
-      <ScrapeForm
-        onScrapeComplete={handleScrapeComplete}
-        onToast={addToast}
-      />
+      <div className="animate-fade-in-up" style={{ animationDelay: '0.05s', opacity: 0 }}>
+        <ScrapeForm
+          onScrapeComplete={handleScrapeComplete}
+          onToast={addToast}
+        />
+      </div>
 
       {/* Stats */}
-      <Stats leads={leads} totalCount={totalCount} />
+      <div className="animate-fade-in-up" style={{ animationDelay: '0.1s', opacity: 0 }}>
+        <Stats stats={stats} />
+      </div>
 
       {/* Filters */}
-      <Filters
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-        availableCities={availableCities}
-        availableCategories={availableCategories}
-      />
+      <div className="animate-fade-in-up" style={{ animationDelay: '0.15s', opacity: 0 }}>
+        <Filters
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          availableCities={availableCities}
+          availableCategories={availableCategories}
+        />
+      </div>
 
       {/* Leads table */}
-      <LeadTable
-        leads={leads}
-        isLoading={isLoading}
-        onStatusChange={handleStatusChange}
-        onNotesChange={handleNotesChange}
-        onCopyMessage={handleCopyMessage}
-        onOpenWhatsApp={handleOpenWhatsApp}
-        onDelete={handleDelete}
-        onBulkDelete={handleBulkDelete}
-      />
+      <div className="animate-fade-in-up" style={{ animationDelay: '0.2s', opacity: 0 }}>
+        <LeadTable
+          leads={leads}
+          isLoading={isLoading}
+          onStatusChange={handleStatusChange}
+          onNotesChange={handleNotesChange}
+          onCopyMessage={handleCopyMessage}
+          onOpenWhatsApp={handleOpenWhatsApp}
+          onDelete={handleDelete}
+          onBulkDelete={handleBulkDelete}
+          onBulkStatusChange={handleBulkStatusChange}
+        />
+      </div>
 
       {/* Pagination */}
       {!isLoading && leads.length > 0 && (
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          totalCount={totalCount}
-          limit={limit}
-          onPageChange={handlePageChange}
-        />
+        <div className="animate-fade-in">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            limit={limit}
+            onPageChange={handlePageChange}
+          />
+        </div>
       )}
 
       {/* Toasts */}

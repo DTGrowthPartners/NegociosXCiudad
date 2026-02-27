@@ -16,6 +16,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Limit file size to 10MB
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: 'Archivo demasiado grande. Máximo 10MB.' },
+        { status: 400 }
+      );
+    }
+
     // Read file content
     const csvText = await file.text();
 
@@ -74,8 +82,8 @@ export async function POST(request: NextRequest) {
             hasWebsite: !!lead.websiteUrl,
             hasInstagram: !!lead.instagramUrl,
             opportunityScore: parseInt(lead.opportunityScore) || 0,
-            status: lead.status || 'NUEVO',
-            notes: lead.notes || '',
+            status: ['NEW', 'CONTACTED', 'REPLIED', 'WON', 'LOST', 'DISCARDED'].includes(lead.status) ? lead.status : 'NEW',
+            notes: lead.notes ? String(lead.notes).slice(0, 1000) : '',
           },
         });
 
