@@ -77,25 +77,25 @@ export function LeadTable({
     return (
       <div className="flex flex-col items-center justify-center py-16 animate-pulse-soft">
         <div className="relative">
-          <div className="w-16 h-16 rounded-2xl bg-primary-50 flex items-center justify-center mb-4">
-            <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
+          <div className="w-16 h-16 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-4">
+            <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
           </div>
         </div>
-        <p className="text-dark-400 font-medium">Cargando leads...</p>
+        <p className="text-muted-200 font-medium">Cargando leads...</p>
       </div>
     );
   }
 
   if (leads.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-100 shadow-card animate-fade-in-up">
-        <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-4">
-          <Database className="w-8 h-8 text-dark-200" />
+      <div className="flex flex-col items-center justify-center py-16 bg-surface-400 rounded-2xl border border-[#262626] shadow-card animate-fade-in-up">
+        <div className="w-16 h-16 rounded-2xl bg-surface-50 flex items-center justify-center mb-4">
+          <Database className="w-8 h-8 text-muted-400" />
         </div>
-        <h3 className="text-lg font-semibold text-dark-600 mb-1">
+        <h3 className="text-lg font-semibold text-muted-50 mb-1">
           No hay leads para mostrar
         </h3>
-        <p className="text-dark-300 text-center max-w-md text-sm">
+        <p className="text-muted-300 text-center max-w-md text-sm">
           Ejecuta un scraping para encontrar negocios o ajusta los filtros si ya
           tienes datos.
         </p>
@@ -106,25 +106,25 @@ export function LeadTable({
   return (
     <div className="space-y-2">
       {/* Selection toolbar */}
-      <div className="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-between shadow-card">
+      <div className="bg-surface-400 border border-[#262626] rounded-2xl p-3 flex items-center justify-between shadow-card">
         <div className="flex items-center gap-3">
           <button
             onClick={handleSelectAll}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-dark-500 hover:bg-gray-50 rounded-xl transition-all duration-200"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-100 hover:bg-surface-50 rounded-xl transition-all duration-200"
           >
             {allSelected ? (
-              <CheckSquare className="w-5 h-5 text-primary-600" />
+              <CheckSquare className="w-5 h-5 text-brand-400" />
             ) : someSelected ? (
-              <div className="w-5 h-5 border-2 border-primary-600 rounded bg-primary-100 flex items-center justify-center">
-                <div className="w-2 h-0.5 bg-primary-600" />
+              <div className="w-5 h-5 border-2 border-brand-400 rounded bg-brand-500/20 flex items-center justify-center">
+                <div className="w-2 h-0.5 bg-brand-400" />
               </div>
             ) : (
-              <Square className="w-5 h-5 text-dark-200" />
+              <Square className="w-5 h-5 text-muted-400" />
             )}
             <span className="font-medium">{allSelected ? 'Deseleccionar todos' : 'Seleccionar todos'}</span>
           </button>
           {selectedIds.size > 0 && (
-            <span className="text-sm text-dark-300 bg-primary-50 px-3 py-1 rounded-full font-medium animate-scale-in">
+            <span className="text-sm text-brand-400 bg-brand-500/10 px-3 py-1 rounded-full font-medium animate-scale-in border border-brand-500/20">
               {selectedIds.size} seleccionado{selectedIds.size !== 1 ? 's' : ''}
             </span>
           )}
@@ -138,7 +138,7 @@ export function LeadTable({
                 e.target.value = '';
               }}
               disabled={isUpdatingStatus}
-              className="px-3 py-2 text-sm border border-gray-200 rounded-xl bg-white hover:bg-gray-50 transition-all duration-200 text-dark-500"
+              className="px-3 py-2 text-sm border border-[#333] rounded-xl bg-surface-300 hover:bg-surface-200 transition-all duration-200 text-muted-100"
               defaultValue=""
             >
               <option value="" disabled>
@@ -165,24 +165,24 @@ export function LeadTable({
       {/* Bulk delete confirmation modal */}
       {showBulkDeleteConfirm && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 modal-overlay"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 modal-overlay"
           onClick={() => !isDeleting && setShowBulkDeleteConfirm(false)}
         >
-          <div className="bg-white rounded-2xl p-6 max-w-md mx-4 shadow-2xl modal-content border border-gray-100" onClick={(e) => e.stopPropagation()}>
-            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center mb-4">
-              <Trash2 className="w-6 h-6 text-red-500" />
+          <div className="bg-surface-400 rounded-2xl p-6 max-w-md mx-4 shadow-2xl modal-content border border-[#333]" onClick={(e) => e.stopPropagation()}>
+            <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20">
+              <Trash2 className="w-6 h-6 text-red-400" />
             </div>
-            <h3 className="text-lg font-bold text-dark-700 mb-2">
+            <h3 className="text-lg font-bold text-white mb-2">
               Eliminar {selectedIds.size} lead{selectedIds.size !== 1 ? 's' : ''}
             </h3>
-            <p className="text-dark-400 mb-6 text-sm">
-              ¿Estás seguro de que quieres eliminar <strong className="text-dark-600">{selectedIds.size}</strong> lead{selectedIds.size !== 1 ? 's' : ''}? Esta acción no se puede deshacer.
+            <p className="text-muted-200 mb-6 text-sm">
+              ¿Estás seguro de que quieres eliminar <strong className="text-white">{selectedIds.size}</strong> lead{selectedIds.size !== 1 ? 's' : ''}? Esta acción no se puede deshacer.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowBulkDeleteConfirm(false)}
                 disabled={isDeleting}
-                className="px-5 py-2.5 text-dark-500 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all duration-200 font-medium text-sm"
+                className="px-5 py-2.5 text-muted-100 bg-surface-200 hover:bg-surface-50 rounded-xl transition-all duration-200 font-medium text-sm"
               >
                 Cancelar
               </button>

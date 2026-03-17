@@ -52,17 +52,17 @@ export function Pagination({
 
   if (totalPages <= 1) {
     return (
-      <div className="text-sm text-dark-300 text-center py-3 font-medium">
+      <div className="text-sm text-muted-300 text-center py-3 font-medium">
         Mostrando {totalCount} {totalCount === 1 ? 'lead' : 'leads'}
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 bg-white rounded-2xl px-5 shadow-card border border-gray-100">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 bg-surface-400 rounded-2xl px-5 shadow-card border border-[#262626]">
       {/* Info */}
-      <div className="text-sm text-dark-400">
-        Mostrando <span className="font-semibold text-dark-600">{startItem}-{endItem}</span> de <span className="font-semibold text-dark-600">{totalCount}</span> leads
+      <div className="text-sm text-muted-200">
+        Mostrando <span className="font-semibold text-white">{startItem}-{endItem}</span> de <span className="font-semibold text-white">{totalCount}</span> leads
       </div>
 
       {/* Page navigation */}
@@ -73,8 +73,8 @@ export function Pagination({
           className={clsx(
             'p-2 rounded-xl transition-all duration-200',
             currentPage === 1
-              ? 'text-dark-200 cursor-not-allowed'
-              : 'text-dark-500 hover:bg-gray-100 hover:text-dark-700'
+              ? 'text-muted-500 cursor-not-allowed'
+              : 'text-muted-200 hover:bg-surface-50 hover:text-white'
           )}
         >
           <ChevronLeft className="w-5 h-5" />
@@ -88,14 +88,14 @@ export function Pagination({
               className={clsx(
                 'min-w-[38px] h-10 rounded-xl text-sm font-semibold transition-all duration-200',
                 page === currentPage
-                  ? 'bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-glow-blue'
-                  : 'text-dark-400 hover:bg-gray-100 hover:text-dark-700'
+                  ? 'bg-gradient-to-r from-brand-500 to-brand-400 text-white shadow-glow'
+                  : 'text-muted-200 hover:bg-surface-50 hover:text-white'
               )}
             >
               {page}
             </button>
           ) : (
-            <span key={index} className="px-1 text-dark-200 select-none">
+            <span key={index} className="px-1 text-muted-500 select-none">
               ···
             </span>
           )
@@ -107,8 +107,8 @@ export function Pagination({
           className={clsx(
             'p-2 rounded-xl transition-all duration-200',
             currentPage === totalPages
-              ? 'text-dark-200 cursor-not-allowed'
-              : 'text-dark-500 hover:bg-gray-100 hover:text-dark-700'
+              ? 'text-muted-500 cursor-not-allowed'
+              : 'text-muted-200 hover:bg-surface-50 hover:text-white'
           )}
         >
           <ChevronRight className="w-5 h-5" />

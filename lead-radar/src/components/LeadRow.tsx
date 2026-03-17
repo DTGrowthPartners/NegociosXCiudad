@@ -35,25 +35,28 @@ interface LeadRowProps {
 
 const STATUS_CONFIG: Record<
   LeadStatus,
-  { label: string; color: string; bgColor: string }
+  { label: string; color: string; bgColor: string; borderColor: string }
 > = {
-  NEW: { label: 'Nuevo', color: 'text-primary-700', bgColor: 'bg-primary-50' },
+  NEW: { label: 'Nuevo', color: 'text-brand-400', bgColor: 'bg-brand-500/10', borderColor: 'border-brand-500/20' },
   CONTACTED: {
     label: 'Contactado',
-    color: 'text-amber-700',
-    bgColor: 'bg-amber-50',
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-500/10',
+    borderColor: 'border-amber-500/20',
   },
   REPLIED: {
     label: 'Respondió',
-    color: 'text-violet-700',
-    bgColor: 'bg-violet-50',
+    color: 'text-violet-400',
+    bgColor: 'bg-violet-500/10',
+    borderColor: 'border-violet-500/20',
   },
-  WON: { label: 'Ganado', color: 'text-emerald-700', bgColor: 'bg-emerald-50' },
-  LOST: { label: 'Perdido', color: 'text-red-700', bgColor: 'bg-red-50' },
+  WON: { label: 'Ganado', color: 'text-emerald-400', bgColor: 'bg-emerald-500/10', borderColor: 'border-emerald-500/20' },
+  LOST: { label: 'Perdido', color: 'text-red-400', bgColor: 'bg-red-500/10', borderColor: 'border-red-500/20' },
   DISCARDED: {
     label: 'Descartado',
-    color: 'text-dark-400',
-    bgColor: 'bg-gray-100',
+    color: 'text-muted-400',
+    bgColor: 'bg-muted-700',
+    borderColor: 'border-muted-600',
   },
 };
 
@@ -97,17 +100,17 @@ export function LeadRow({
   };
 
   const scoreGradient = lead.opportunityScore >= 70
-    ? 'from-emerald-500 to-green-400'
+    ? 'from-emerald-500 to-emerald-400'
     : lead.opportunityScore >= 40
-    ? 'from-amber-500 to-yellow-400'
-    : 'from-gray-400 to-gray-300';
+    ? 'from-amber-500 to-amber-400'
+    : 'from-muted-500 to-muted-400';
 
   return (
     <div className={clsx(
-      "bg-white border rounded-2xl overflow-hidden transition-all duration-200",
+      "bg-surface-400 border rounded-2xl overflow-hidden transition-all duration-200",
       isSelected
-        ? "border-primary-400 ring-2 ring-primary-100 shadow-glow-blue"
-        : "border-gray-100 shadow-card hover:shadow-card-hover hover:border-gray-200"
+        ? "border-brand-500/50 ring-2 ring-brand-500/20 shadow-glow"
+        : "border-[#262626] shadow-card hover:shadow-card-hover hover:border-[#333]"
     )}>
       {/* Main row */}
       <div className="p-4">
@@ -118,9 +121,9 @@ export function LeadRow({
             className="flex-shrink-0 mt-1 transition-transform duration-200 hover:scale-110"
           >
             {isSelected ? (
-              <CheckSquare className="w-5 h-5 text-primary-600" />
+              <CheckSquare className="w-5 h-5 text-brand-400" />
             ) : (
-              <Square className="w-5 h-5 text-dark-200 hover:text-dark-400" />
+              <Square className="w-5 h-5 text-muted-500 hover:text-muted-300" />
             )}
           </button>
 
@@ -139,37 +142,38 @@ export function LeadRow({
           {/* Main info */}
           <div className="flex-grow min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-bold text-dark-700 truncate">
+              <h3 className="font-bold text-white truncate">
                 {lead.businessName}
               </h3>
               <span
                 className={clsx(
-                  'px-2.5 py-0.5 rounded-lg text-[11px] font-semibold tracking-wide',
+                  'px-2.5 py-0.5 rounded-lg text-[11px] font-semibold tracking-wide border',
                   statusConfig.bgColor,
-                  statusConfig.color
+                  statusConfig.color,
+                  statusConfig.borderColor
                 )}
               >
                 {statusConfig.label}
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 text-sm text-dark-400">
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-200">
               <span className="flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5" />
                 {lead.city}
               </span>
-              <span className="text-dark-200">·</span>
-              <span className="text-dark-300">{lead.category}</span>
+              <span className="text-muted-600">·</span>
+              <span className="text-muted-300">{lead.category}</span>
             </div>
 
             {/* Quick indicators */}
             <div className="flex items-center gap-2 mt-2.5">
               <span
                 className={clsx(
-                  'flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg',
+                  'flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg border',
                   lead.hasWebsite
-                    ? 'bg-emerald-50 text-emerald-700'
-                    : 'bg-red-50 text-red-600'
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                    : 'bg-red-500/10 text-red-400 border-red-500/20'
                 )}
               >
                 <Globe className="w-3 h-3" />
@@ -177,22 +181,22 @@ export function LeadRow({
               </span>
               <span
                 className={clsx(
-                  'flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg',
+                  'flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg border',
                   lead.hasInstagram
-                    ? 'bg-emerald-50 text-emerald-700'
-                    : 'bg-red-50 text-red-600'
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                    : 'bg-red-500/10 text-red-400 border-red-500/20'
                 )}
               >
                 <Instagram className="w-3 h-3" />
                 {lead.hasInstagram ? 'Con IG' : 'Sin IG'}
               </span>
               {lead.phone ? (
-                <span className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700">
+                <span className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   <Phone className="w-3 h-3" />
                   {lead.phone}
                 </span>
               ) : (
-                <span className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg bg-gray-50 text-dark-300">
+                <span className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg bg-surface-200 text-muted-400 border border-[#333]">
                   <Phone className="w-3 h-3" />
                   Sin teléfono
                 </span>
@@ -204,7 +208,7 @@ export function LeadRow({
           <div className="flex-shrink-0 flex items-center gap-1">
             <button
               onClick={() => onCopyMessage(lead)}
-              className="p-2 text-dark-300 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all duration-200"
+              className="p-2 text-muted-400 hover:text-brand-400 hover:bg-brand-500/10 rounded-xl transition-all duration-200"
               title="Copiar mensaje"
             >
               <Copy className="w-4.5 h-4.5" />
@@ -216,8 +220,8 @@ export function LeadRow({
               className={clsx(
                 'p-2 rounded-xl transition-all duration-200',
                 lead.phone
-                  ? 'text-green-600 hover:bg-green-50 hover:scale-110'
-                  : 'text-dark-200 cursor-not-allowed'
+                  ? 'text-emerald-400 hover:bg-emerald-500/10 hover:scale-110'
+                  : 'text-muted-600 cursor-not-allowed'
               )}
               title={lead.phone ? 'Abrir WhatsApp' : 'Sin teléfono'}
             >
@@ -229,7 +233,7 @@ export function LeadRow({
                 href={lead.websiteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 text-dark-300 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all duration-200"
+                className="p-2 text-muted-400 hover:text-brand-400 hover:bg-brand-500/10 rounded-xl transition-all duration-200"
                 title="Abrir website"
               >
                 <Globe className="w-4.5 h-4.5" />
@@ -241,7 +245,7 @@ export function LeadRow({
                 href={lead.instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 text-pink-500 hover:bg-pink-50 rounded-xl transition-all duration-200 hover:scale-110"
+                className="p-2 text-pink-400 hover:bg-pink-500/10 rounded-xl transition-all duration-200 hover:scale-110"
                 title="Abrir Instagram"
               >
                 <Instagram className="w-4.5 h-4.5" />
@@ -250,7 +254,7 @@ export function LeadRow({
 
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="p-2 text-dark-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-200"
+              className="p-2 text-muted-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all duration-200"
               title="Eliminar lead"
             >
               <Trash2 className="w-4.5 h-4.5" />
@@ -258,7 +262,7 @@ export function LeadRow({
 
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="p-2 text-dark-300 hover:text-dark-500 hover:bg-gray-50 rounded-xl transition-all duration-200"
+              className="p-2 text-muted-400 hover:text-white hover:bg-surface-50 rounded-xl transition-all duration-200"
             >
               <div className={clsx('transition-transform duration-300', isExpanded ? 'rotate-180' : 'rotate-0')}>
                 <ChevronDown className="w-5 h-5" />
@@ -271,24 +275,24 @@ export function LeadRow({
       {/* Delete confirmation modal */}
       {showDeleteConfirm && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 modal-overlay"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 modal-overlay"
           onClick={() => !isUpdating && setShowDeleteConfirm(false)}
         >
-          <div className="bg-white rounded-2xl p-6 max-w-md mx-4 shadow-2xl modal-content border border-gray-100" onClick={(e) => e.stopPropagation()}>
-            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center mb-4">
-              <Trash2 className="w-6 h-6 text-red-500" />
+          <div className="bg-surface-400 rounded-2xl p-6 max-w-md mx-4 shadow-2xl modal-content border border-[#333]" onClick={(e) => e.stopPropagation()}>
+            <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20">
+              <Trash2 className="w-6 h-6 text-red-400" />
             </div>
-            <h3 className="text-lg font-bold text-dark-700 mb-2">
+            <h3 className="text-lg font-bold text-white mb-2">
               Eliminar lead
             </h3>
-            <p className="text-dark-400 mb-6 text-sm">
-              ¿Estás seguro de que quieres eliminar <strong className="text-dark-600">{lead.businessName}</strong>? Esta acción no se puede deshacer.
+            <p className="text-muted-200 mb-6 text-sm">
+              ¿Estás seguro de que quieres eliminar <strong className="text-white">{lead.businessName}</strong>? Esta acción no se puede deshacer.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={isUpdating}
-                className="px-5 py-2.5 text-dark-500 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all duration-200 font-medium text-sm"
+                className="px-5 py-2.5 text-muted-100 bg-surface-200 hover:bg-surface-50 rounded-xl transition-all duration-200 font-medium text-sm"
               >
                 Cancelar
               </button>
@@ -316,29 +320,29 @@ export function LeadRow({
 
       {/* Expanded details */}
       {isExpanded && (
-        <div className="px-4 pb-4 pt-3 border-t border-gray-100 bg-gradient-to-b from-gray-50/80 to-white animate-fade-in-down">
+        <div className="px-4 pb-4 pt-3 border-t border-[#262626] bg-gradient-to-b from-surface-300/50 to-surface-400 animate-fade-in-down">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Left column - Details */}
             <div className="space-y-4">
               {lead.address && (
                 <div>
-                  <span className="text-[11px] font-semibold text-dark-300 uppercase tracking-wider">
+                  <span className="text-[11px] font-semibold text-muted-300 uppercase tracking-wider">
                     Dirección
                   </span>
-                  <p className="text-sm text-dark-600 mt-0.5">{lead.address}</p>
+                  <p className="text-sm text-muted-50 mt-0.5">{lead.address}</p>
                 </div>
               )}
 
               {lead.websiteUrl && (
                 <div>
-                  <span className="text-[11px] font-semibold text-dark-300 uppercase tracking-wider">
+                  <span className="text-[11px] font-semibold text-muted-300 uppercase tracking-wider">
                     Website
                   </span>
                   <a
                     href={lead.websiteUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-primary-600 hover:text-primary-700 hover:underline flex items-center gap-1 mt-0.5"
+                    className="text-sm text-brand-400 hover:text-brand-300 hover:underline flex items-center gap-1 mt-0.5"
                   >
                     {lead.websiteUrl}
                     <ExternalLink className="w-3 h-3" />
@@ -348,14 +352,14 @@ export function LeadRow({
 
               {lead.instagramUrl && (
                 <div>
-                  <span className="text-[11px] font-semibold text-dark-300 uppercase tracking-wider">
+                  <span className="text-[11px] font-semibold text-muted-300 uppercase tracking-wider">
                     Instagram
                   </span>
                   <a
                     href={lead.instagramUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-pink-600 hover:text-pink-700 hover:underline flex items-center gap-1 mt-0.5"
+                    className="text-sm text-pink-400 hover:text-pink-300 hover:underline flex items-center gap-1 mt-0.5"
                   >
                     {lead.instagramUrl}
                     <ExternalLink className="w-3 h-3" />
@@ -364,11 +368,11 @@ export function LeadRow({
               )}
 
               <div>
-                <span className="text-[11px] font-semibold text-dark-300 uppercase tracking-wider">
+                <span className="text-[11px] font-semibold text-muted-300 uppercase tracking-wider">
                   Score de oportunidad
                 </span>
                 <div className="flex items-center gap-3 mt-1.5">
-                  <div className="flex-grow bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                  <div className="flex-grow bg-surface-200 rounded-full h-2.5 overflow-hidden">
                     <div
                       className={clsx(
                         'h-full rounded-full bg-gradient-to-r transition-all duration-700',
@@ -377,11 +381,11 @@ export function LeadRow({
                       style={{ width: `${lead.opportunityScore}%` }}
                     />
                   </div>
-                  <span className="text-sm font-bold text-dark-600 min-w-[50px] text-right">
+                  <span className="text-sm font-bold text-white min-w-[50px] text-right">
                     {lead.opportunityScore}/100
                   </span>
                 </div>
-                <p className="text-xs text-dark-300 mt-1">
+                <p className="text-xs text-muted-300 mt-1">
                   {scoreInfo.description}
                 </p>
               </div>
@@ -391,7 +395,7 @@ export function LeadRow({
             <div className="space-y-4">
               {/* Status selector */}
               <div>
-                <span className="text-[11px] font-semibold text-dark-300 uppercase tracking-wider mb-2 block">
+                <span className="text-[11px] font-semibold text-muted-300 uppercase tracking-wider mb-2 block">
                   Cambiar estado
                 </span>
                 <div className="flex flex-wrap gap-1.5">
@@ -401,10 +405,10 @@ export function LeadRow({
                       onClick={() => handleStatusChange(status as LeadStatus)}
                       disabled={isUpdating || lead.status === status}
                       className={clsx(
-                        'px-3 py-1.5 text-xs rounded-xl transition-all duration-200 font-medium',
+                        'px-3 py-1.5 text-xs rounded-xl transition-all duration-200 font-medium border',
                         lead.status === status
-                          ? `${config.bgColor} ${config.color} ring-1 ring-current/20`
-                          : 'bg-gray-50 text-dark-400 hover:bg-gray-100 hover:text-dark-600'
+                          ? `${config.bgColor} ${config.color} ${config.borderColor}`
+                          : 'bg-surface-200 text-muted-300 border-[#333] hover:bg-surface-50 hover:text-white hover:border-brand-500/30'
                       )}
                     >
                       {config.label}
@@ -416,13 +420,13 @@ export function LeadRow({
               {/* Notes */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-semibold text-dark-300 uppercase tracking-wider">
+                  <span className="text-[11px] font-semibold text-muted-300 uppercase tracking-wider">
                     Notas
                   </span>
                   {!isEditingNotes && (
                     <button
                       onClick={() => setIsEditingNotes(true)}
-                      className="text-xs text-primary-600 hover:text-primary-700 flex items-center gap-1 font-medium px-2 py-1 rounded-lg hover:bg-primary-50 transition-all duration-200"
+                      className="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1 font-medium px-2 py-1 rounded-lg hover:bg-brand-500/10 transition-all duration-200"
                     >
                       <Edit2 className="w-3 h-3" />
                       Editar
@@ -435,7 +439,7 @@ export function LeadRow({
                     <textarea
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none resize-none transition-all duration-200 bg-white"
+                      className="w-full px-3 py-2.5 text-sm border border-[#333] rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none resize-none transition-all duration-200 bg-surface-300 text-muted-50"
                       rows={3}
                       placeholder="Agregar notas sobre este lead..."
                     />
@@ -445,7 +449,7 @@ export function LeadRow({
                           setNotes(lead.notes || '');
                           setIsEditingNotes(false);
                         }}
-                        className="px-3 py-1.5 text-sm text-dark-400 hover:bg-gray-100 rounded-xl transition-all duration-200 flex items-center gap-1 font-medium"
+                        className="px-3 py-1.5 text-sm text-muted-300 hover:bg-surface-50 rounded-xl transition-all duration-200 flex items-center gap-1 font-medium"
                       >
                         <X className="w-4 h-4" />
                         Cancelar
@@ -453,7 +457,7 @@ export function LeadRow({
                       <button
                         onClick={handleSaveNotes}
                         disabled={isUpdating}
-                        className="btn-press px-4 py-1.5 text-sm bg-gradient-to-r from-primary-600 to-primary-500 text-white hover:from-primary-700 hover:to-primary-600 rounded-xl transition-all duration-200 flex items-center gap-1 font-medium shadow-card"
+                        className="btn-press px-4 py-1.5 text-sm bg-gradient-to-r from-brand-500 to-brand-400 text-white hover:from-brand-600 hover:to-brand-500 rounded-xl transition-all duration-200 flex items-center gap-1 font-medium shadow-card hover:shadow-glow"
                       >
                         <Save className="w-4 h-4" />
                         Guardar
@@ -461,9 +465,9 @@ export function LeadRow({
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-dark-500">
+                  <p className="text-sm text-muted-100">
                     {lead.notes || (
-                      <span className="text-dark-200 italic">Sin notas</span>
+                      <span className="text-muted-500 italic">Sin notas</span>
                     )}
                   </p>
                 )}

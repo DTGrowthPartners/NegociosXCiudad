@@ -48,36 +48,40 @@ export function Stats({ stats }: StatsProps) {
       label: 'Total Leads',
       value: stats.total,
       icon: Users,
-      gradient: 'from-primary-500 to-primary-600',
-      iconBg: 'bg-primary-500/10',
-      iconColor: 'text-primary-600',
-      accent: 'bg-primary-500',
+      gradient: 'from-brand-500 to-brand-400',
+      iconBg: 'bg-brand-500/10',
+      iconColor: 'text-brand-400',
+      borderGlow: 'hover:border-brand-500/40',
+      accent: 'bg-brand-500',
     },
     {
       label: 'Alta Oportunidad',
       value: stats.highOpportunity,
       icon: Target,
-      gradient: 'from-emerald-500 to-green-600',
+      gradient: 'from-emerald-500 to-emerald-400',
       iconBg: 'bg-emerald-500/10',
-      iconColor: 'text-emerald-600',
+      iconColor: 'text-emerald-400',
+      borderGlow: 'hover:border-emerald-500/40',
       accent: 'bg-emerald-500',
     },
     {
       label: 'Contactados',
       value: stats.contacted,
       icon: Clock,
-      gradient: 'from-amber-500 to-orange-500',
+      gradient: 'from-amber-500 to-amber-400',
       iconBg: 'bg-amber-500/10',
-      iconColor: 'text-amber-600',
+      iconColor: 'text-amber-400',
+      borderGlow: 'hover:border-amber-500/40',
       accent: 'bg-amber-500',
     },
     {
       label: 'Ganados',
       value: stats.won,
       icon: CheckCircle,
-      gradient: 'from-violet-500 to-purple-600',
+      gradient: 'from-violet-500 to-violet-400',
       iconBg: 'bg-violet-500/10',
-      iconColor: 'text-violet-600',
+      iconColor: 'text-violet-400',
+      borderGlow: 'hover:border-violet-500/40',
       accent: 'bg-violet-500',
     },
   ];
@@ -87,16 +91,16 @@ export function Stats({ stats }: StatsProps) {
       {statCards.map((stat, index) => (
         <div
           key={stat.label}
-          className="group relative bg-white rounded-2xl shadow-card border border-gray-100 p-5 card-hover overflow-hidden"
+          className={`group relative bg-surface-400 rounded-2xl shadow-card border border-[#262626] p-5 card-hover overflow-hidden ${stat.borderGlow}`}
           style={{ animationDelay: `${index * 0.08}s` }}
         >
           {/* Gradient accent bar */}
-          <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.gradient} opacity-80`} />
+          <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.gradient} opacity-60 group-hover:opacity-100 transition-opacity duration-300`} />
 
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium text-dark-400 mb-1">{stat.label}</p>
-              <p className="text-3xl font-bold text-dark-700 tracking-tight">
+              <p className="text-sm font-medium text-muted-200 mb-1">{stat.label}</p>
+              <p className="text-3xl font-bold text-white tracking-tight">
                 <AnimatedNumber value={stat.value} />
               </p>
             </div>
@@ -107,7 +111,7 @@ export function Stats({ stats }: StatsProps) {
 
           {/* Subtle indicator */}
           {stat.value > 0 && (
-            <div className="mt-3 flex items-center gap-1 text-xs text-dark-300">
+            <div className="mt-3 flex items-center gap-1 text-xs text-muted-300">
               <TrendingUp className="w-3 h-3" />
               <span>{stat.value} registrados</span>
             </div>

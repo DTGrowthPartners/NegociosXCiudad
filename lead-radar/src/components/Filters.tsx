@@ -48,7 +48,7 @@ const SCORE_OPTIONS = [
   { value: '0', label: 'Cualquiera (≥0)' },
 ];
 
-const selectClasses = 'w-full px-2.5 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50/50 hover:bg-white text-dark-600';
+const selectClasses = 'w-full px-2.5 py-2 text-sm border border-[#333] rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all duration-200 bg-surface-300 hover:bg-surface-200 text-muted-50 hover:border-brand-500/30';
 
 export function Filters({
   filters,
@@ -87,19 +87,19 @@ export function Filters({
   const hasActiveFilters = activeFilterCount > 0;
 
   return (
-    <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-5">
+    <div className="bg-surface-400 rounded-2xl shadow-card border border-[#262626] p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-2.5 text-dark-500 hover:text-dark-700 transition-colors duration-200"
+          className="flex items-center gap-2.5 text-muted-100 hover:text-white transition-colors duration-200"
         >
-          <div className="p-1.5 rounded-lg bg-gray-100">
+          <div className="p-1.5 rounded-lg bg-surface-50 border border-[#333]">
             <Filter className="w-4 h-4" />
           </div>
           <span className="font-semibold text-sm">Filtros</span>
           {hasActiveFilters && (
-            <span className="bg-primary-600 text-white text-[10px] w-5 h-5 rounded-full font-bold flex items-center justify-center animate-scale-in">
+            <span className="bg-brand-500 text-white text-[10px] w-5 h-5 rounded-full font-bold flex items-center justify-center animate-scale-in">
               {activeFilterCount}
             </span>
           )}
@@ -114,7 +114,7 @@ export function Filters({
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
-            className="flex items-center gap-1.5 text-xs font-medium text-dark-300 hover:text-red-500 transition-colors duration-200 px-3 py-1.5 rounded-lg hover:bg-red-50"
+            className="flex items-center gap-1.5 text-xs font-medium text-muted-300 hover:text-red-400 transition-colors duration-200 px-3 py-1.5 rounded-lg hover:bg-red-500/10"
           >
             <X className="w-3.5 h-3.5" />
             Limpiar filtros
@@ -124,13 +124,13 @@ export function Filters({
 
       {/* Search - always visible */}
       <div className="mb-4 relative">
-        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-300" />
+        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-400" />
         <input
           type="text"
           placeholder="Buscar por nombre, dirección o notas..."
           value={filters.search}
           onChange={(e) => handleChange('search', e.target.value)}
-          className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 text-sm bg-gray-50/50 hover:bg-white placeholder:text-dark-200"
+          className="w-full pl-10 pr-3 py-2.5 border border-[#333] rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all duration-200 text-sm bg-surface-300 hover:bg-surface-200 text-muted-50 hover:border-brand-500/30"
         />
       </div>
 
@@ -143,7 +143,7 @@ export function Filters({
       >
         {/* Status */}
         <div>
-          <label className="block text-xs font-semibold text-dark-400 mb-1.5">
+          <label className="block text-xs font-semibold text-muted-200 mb-1.5">
             Estado
           </label>
           <select
@@ -161,7 +161,7 @@ export function Filters({
 
         {/* Min Score */}
         <div>
-          <label className="block text-xs font-semibold text-dark-400 mb-1.5">
+          <label className="block text-xs font-semibold text-muted-200 mb-1.5">
             Score mínimo
           </label>
           <select
@@ -179,7 +179,7 @@ export function Filters({
 
         {/* Has Website */}
         <div>
-          <label className="block text-xs font-semibold text-dark-400 mb-1.5">
+          <label className="block text-xs font-semibold text-muted-200 mb-1.5">
             Website
           </label>
           <select
@@ -197,7 +197,7 @@ export function Filters({
 
         {/* Has Instagram */}
         <div>
-          <label className="block text-xs font-semibold text-dark-400 mb-1.5">
+          <label className="block text-xs font-semibold text-muted-200 mb-1.5">
             Instagram
           </label>
           <select
@@ -215,7 +215,7 @@ export function Filters({
 
         {/* City */}
         <div>
-          <label className="block text-xs font-semibold text-dark-400 mb-1.5">
+          <label className="block text-xs font-semibold text-muted-200 mb-1.5">
             Ciudad
           </label>
           <select
@@ -234,7 +234,7 @@ export function Filters({
 
         {/* Category */}
         <div>
-          <label className="block text-xs font-semibold text-dark-400 mb-1.5">
+          <label className="block text-xs font-semibold text-muted-200 mb-1.5">
             Categoría
           </label>
           <select

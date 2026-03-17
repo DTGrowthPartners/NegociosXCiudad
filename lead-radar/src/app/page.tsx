@@ -349,7 +349,7 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-in-down">
         <div>
           <h1 className="text-3xl font-bold gradient-text tracking-tight">Dashboard</h1>
-          <p className="text-dark-400 mt-1">
+          <p className="text-muted-200 mt-1">
             Encuentra negocios sin presencia web y genera oportunidades
           </p>
         </div>
@@ -357,7 +357,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={handleRefresh}
-            className="btn-press inline-flex items-center gap-2 px-4 py-2.5 text-dark-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 shadow-card hover:shadow-card-hover"
+            className="btn-press inline-flex items-center gap-2 px-4 py-2.5 text-muted-100 bg-surface-400 border border-[#333] rounded-xl hover:bg-surface-50 hover:border-brand-500/30 transition-all duration-200 shadow-card hover:shadow-card-hover"
           >
             <RefreshCw className="w-4 h-4" />
             Actualizar
@@ -365,12 +365,12 @@ export default function DashboardPage() {
           <button
             onClick={handleExportCSV}
             disabled={totalCount === 0}
-            className="btn-press inline-flex items-center gap-2 px-4 py-2.5 text-white bg-gradient-to-r from-green-600 to-green-500 rounded-xl hover:from-green-700 hover:to-green-600 transition-all duration-200 shadow-card hover:shadow-card-hover disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-press inline-flex items-center gap-2 px-4 py-2.5 text-white bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-xl hover:from-emerald-700 hover:to-emerald-600 transition-all duration-200 shadow-card hover:shadow-glow disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Download className="w-4 h-4" />
             Exportar CSV
           </button>
-          <label className="btn-press inline-flex items-center gap-2 px-4 py-2.5 text-white bg-gradient-to-r from-primary-600 to-primary-500 rounded-xl hover:from-primary-700 hover:to-primary-600 transition-all duration-200 cursor-pointer shadow-card hover:shadow-card-hover">
+          <label className="btn-press inline-flex items-center gap-2 px-4 py-2.5 text-white bg-gradient-to-r from-brand-500 to-brand-400 rounded-xl hover:from-brand-600 hover:to-brand-500 transition-all duration-200 cursor-pointer shadow-card hover:shadow-glow">
             <Upload className="w-4 h-4" />
             Importar CSV
             <input

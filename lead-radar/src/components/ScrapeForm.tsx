@@ -123,6 +123,8 @@ const SUGGESTED_CATEGORIES = [
   'Zapaterías',
 ];
 
+const selectClasses = 'w-full px-3 py-2.5 border border-[#333] rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all duration-200 bg-surface-300 hover:bg-surface-200 text-muted-50 hover:border-brand-500/30';
+
 export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
   const [city, setCity] = useState('');
   const [category, setCategory] = useState('');
@@ -243,19 +245,19 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden">
+    <div className="bg-surface-400 rounded-2xl shadow-card border border-[#262626] overflow-hidden">
       {/* Header with gradient accent */}
       <div className="relative px-6 pt-6 pb-4">
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-600 via-primary-400 to-primary-600 opacity-80" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-500 via-brand-400 to-accent-cyan opacity-60" />
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-primary-50">
-            <Search className="w-5 h-5 text-primary-600" />
+          <div className="p-2 rounded-xl bg-brand-500/10 border border-brand-500/20">
+            <Search className="w-5 h-5 text-brand-400" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-dark-700">
+            <h2 className="text-lg font-bold text-white">
               Buscar Negocios
             </h2>
-            <p className="text-xs text-dark-300">Scraping de Google Maps en tiempo real</p>
+            <p className="text-xs text-muted-300">Scraping de Google Maps en tiempo real</p>
           </div>
         </div>
       </div>
@@ -266,7 +268,7 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
           <div>
             <label
               htmlFor="city"
-              className="block text-sm font-medium text-dark-500 mb-1.5"
+              className="block text-sm font-medium text-muted-100 mb-1.5"
             >
               Ciudad
             </label>
@@ -274,7 +276,7 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
               id="city"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50/50 hover:bg-white text-dark-600"
+              className={selectClasses}
               disabled={isLoading}
             >
               <option value="">Selecciona una ciudad</option>
@@ -290,7 +292,7 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
           <div>
             <label
               htmlFor="category"
-              className="block text-sm font-medium text-dark-500 mb-1.5"
+              className="block text-sm font-medium text-muted-100 mb-1.5"
             >
               Categoría
             </label>
@@ -298,7 +300,7 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
               id="category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50/50 hover:bg-white text-dark-600"
+              className={selectClasses}
               disabled={isLoading}
             >
               <option value="">Todas las categorías</option>
@@ -314,7 +316,7 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
           <div>
             <label
               htmlFor="limit"
-              className="block text-sm font-medium text-dark-500 mb-1.5"
+              className="block text-sm font-medium text-muted-100 mb-1.5"
             >
               Límite de resultados
             </label>
@@ -322,7 +324,7 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
               id="limit"
               value={limit}
               onChange={(e) => setLimit(parseInt(e.target.value))}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-gray-50/50 hover:bg-white text-dark-600"
+              className={selectClasses}
               disabled={isLoading}
             >
               <option value={10}>10 negocios</option>
@@ -340,10 +342,10 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
             type="submit"
             disabled={isLoading || !city || !category}
             className={clsx(
-              'btn-press inline-flex items-center gap-2 px-7 py-2.5 rounded-xl font-semibold transition-all duration-200 shadow-card hover:shadow-card-hover',
+              'btn-press inline-flex items-center gap-2 px-7 py-2.5 rounded-xl font-semibold transition-all duration-200 shadow-card',
               isLoading || !city || !category
-                ? 'bg-gray-300 cursor-not-allowed text-gray-500'
-                : 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white'
+                ? 'bg-muted-700 cursor-not-allowed text-muted-400'
+                : 'bg-gradient-to-r from-brand-500 to-brand-400 hover:from-brand-600 hover:to-brand-500 text-white hover:shadow-glow'
             )}
           >
             {isLoading ? (
@@ -363,21 +365,21 @@ export function ScrapeForm({ onScrapeComplete, onToast }: ScrapeFormProps) {
 
       {isLoading && (
         <div className="mx-6 mb-6 animate-fade-in-up">
-          <div className="p-4 bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl border border-primary-100">
+          <div className="p-4 bg-gradient-to-r from-brand-500/10 to-brand-400/5 rounded-xl border border-brand-500/20">
             {/* Progress bar */}
-            <div className="h-1.5 bg-primary-100 rounded-full overflow-hidden mb-3">
-              <div className="h-full bg-gradient-to-r from-primary-500 to-primary-400 rounded-full progress-shine" style={{ width: '60%' }} />
+            <div className="h-1.5 bg-surface-200 rounded-full overflow-hidden mb-3">
+              <div className="h-full bg-gradient-to-r from-brand-500 to-brand-400 rounded-full progress-shine" style={{ width: '60%' }} />
             </div>
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <Loader2 className="w-5 h-5 animate-spin text-primary-600" />
-                <p className="text-sm font-medium text-dark-600">
+                <Loader2 className="w-5 h-5 animate-spin text-brand-400" />
+                <p className="text-sm font-medium text-muted-50">
                   {progress || 'El scraping está en progreso...'}
                 </p>
               </div>
               <button
                 onClick={handleCancel}
-                className="btn-press inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-all duration-200"
+                className="btn-press inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all duration-200"
               >
                 <XCircle className="w-4 h-4" />
                 Cancelar

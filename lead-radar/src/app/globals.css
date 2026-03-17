@@ -3,17 +3,37 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 45, 45, 45;
-  --background-start-rgb: 245, 247, 250;
-  --background-end-rgb: 240, 243, 248;
-  --dark-charcoal: #575757;
-  --primary-blue: #2563eb;
+  --foreground: #FAFAFA;
+  --background: #0A0A0A;
+  --surface: #121212;
+  --surface-light: #1A1A1A;
+  --surface-lighter: #1F1F1F;
+  --border: #262626;
+  --border-light: #333333;
+  --muted: #999999;
+  --brand-primary: #0F76D6;
+  --brand-accent: #26BDF0;
+  --brand-light: #C2FBFF;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(135deg, rgb(var(--background-start-rgb)) 0%, rgb(var(--background-end-rgb)) 100%);
+  color: var(--foreground);
+  background: var(--background);
   min-height: 100vh;
+}
+
+/* Ambient background glow */
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(ellipse at 30% 20%, rgba(15, 118, 214, 0.06) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 80%, rgba(38, 189, 240, 0.04) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Modern custom scrollbar */
@@ -27,17 +47,17 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: #333;
   border-radius: 100px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #999;
+  background: #555;
 }
 
 /* Focus styles */
 *:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--brand-primary);
   outline-offset: 2px;
 }
 
@@ -53,32 +73,33 @@ body {
 .stagger-9 { animation-delay: 0.45s; }
 .stagger-10 { animation-delay: 0.5s; }
 
-/* Glass morphism utility */
+/* Glass morphism utility - dark variant */
 .glass {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(18, 18, 18, 0.8);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(10, 10, 10, 0.92);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
 /* Card hover lift */
 .card-hover {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
 }
 
 .card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.04);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(15, 118, 214, 0.1);
+  border-color: rgba(15, 118, 214, 0.3);
 }
 
 /* Shimmer loading background */
 .shimmer-bg {
-  background: linear-gradient(90deg, transparent 25%, rgba(255, 255, 255, 0.5) 50%, transparent 75%);
+  background: linear-gradient(90deg, transparent 25%, rgba(255, 255, 255, 0.03) 50%, transparent 75%);
   background-size: 200% 100%;
   animation: shimmer 2s infinite linear;
 }
@@ -88,9 +109,9 @@ body {
   100% { background-position: 200% 0; }
 }
 
-/* Gradient text */
+/* Gradient text - DT Growth brand */
 .gradient-text {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #575757 100%);
+  background: linear-gradient(135deg, #0F76D6 0%, #26BDF0 50%, #C2FBFF 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -108,12 +129,12 @@ body {
   position: absolute;
   inset: -1px;
   border-radius: inherit;
-  background: linear-gradient(135deg, #2563eb, #93c5fd, #2563eb);
-  background-size: 200% 200%;
-  animation: gradientX 3s ease infinite;
+  background: linear-gradient(135deg, #0F76D6, #26BDF0, #C2FBFF, #0F76D6);
+  background-size: 300% 300%;
+  animation: gradientX 4s ease infinite;
   z-index: -1;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.4s ease;
 }
 
 .gradient-border:hover::before {
@@ -135,7 +156,7 @@ body {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   animation: progressBar 1.5s ease-in-out infinite;
 }
 
@@ -146,12 +167,35 @@ body {
 
 /* Smooth transitions for selects */
 select {
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 /* Button press effect */
+.btn-press {
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
+}
+
 .btn-press:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
+}
+
+/* Button hover glow */
+.btn-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(15, 118, 214, 0.2), rgba(38, 189, 240, 0.1));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn-glow:hover::before {
+  opacity: 1;
 }
 
 /* Animated underline for nav links */
@@ -166,9 +210,9 @@ select {
   left: 50%;
   width: 0;
   height: 2px;
-  background: linear-gradient(90deg, #2563eb, #60a5fa);
+  background: linear-gradient(90deg, #0F76D6, #26BDF0);
   border-radius: 100px;
-  transition: width 0.3s ease, left 0.3s ease;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .nav-link:hover::after,
@@ -207,6 +251,12 @@ select {
   transition: opacity 0.2s ease, transform 0.2s ease;
   white-space: nowrap;
   z-index: 50;
+  background: #1F1F1F;
+  color: #E0E0E0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  border: 1px solid #333;
 }
 
 /* Modal overlay animation */
@@ -215,7 +265,7 @@ select {
 }
 
 .modal-content {
-  animation: scaleIn 0.3s ease-out;
+  animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes fadeIn {
@@ -224,6 +274,48 @@ select {
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
+  from { opacity: 0; transform: scale(0.92); }
   to { opacity: 1; transform: scale(1); }
+}
+
+/* Interactive hover effects */
+.interactive {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.interactive:hover {
+  background-color: rgba(15, 118, 214, 0.08);
+  border-color: rgba(15, 118, 214, 0.3);
+}
+
+/* Glow card effect */
+.glow-card {
+  position: relative;
+}
+
+.glow-card::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(15, 118, 214, 0.2), transparent, rgba(38, 189, 240, 0.1));
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+}
+
+.glow-card:hover::after {
+  opacity: 1;
+}
+
+/* Dark select styling */
+select option {
+  background: #1A1A1A;
+  color: #E0E0E0;
+}
+
+/* Input dark styling */
+input::placeholder,
+textarea::placeholder {
+  color: #616161;
 }

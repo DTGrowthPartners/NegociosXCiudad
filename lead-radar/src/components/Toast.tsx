@@ -35,21 +35,21 @@ export function Toast({ message, type, onClose, duration = 3000 }: ToastProps) {
   };
 
   const styles = {
-    success: 'bg-white text-emerald-700 border-emerald-200/60',
-    error: 'bg-white text-red-700 border-red-200/60',
-    info: 'bg-white text-primary-700 border-primary-200/60',
+    success: 'bg-surface-300 text-emerald-400 border-emerald-500/30',
+    error: 'bg-surface-300 text-red-400 border-red-500/30',
+    info: 'bg-surface-300 text-brand-400 border-brand-500/30',
   };
 
   const iconBg = {
-    success: 'bg-emerald-50',
-    error: 'bg-red-50',
-    info: 'bg-primary-50',
+    success: 'bg-emerald-500/10',
+    error: 'bg-red-500/10',
+    info: 'bg-brand-500/10',
   };
 
   const accentColor = {
     success: 'bg-emerald-500',
     error: 'bg-red-500',
-    info: 'bg-primary-500',
+    info: 'bg-brand-500',
   };
 
   return (
@@ -66,15 +66,15 @@ export function Toast({ message, type, onClose, duration = 3000 }: ToastProps) {
       <div className={clsx('p-1.5 rounded-lg', iconBg[type])}>
         {icons[type]}
       </div>
-      <span className="text-sm font-medium flex-grow">{message}</span>
+      <span className="text-sm font-medium flex-grow text-muted-50">{message}</span>
       <button
         onClick={() => {
           setIsVisible(false);
           setTimeout(onClose, 300);
         }}
-        className="ml-1 p-1 hover:bg-gray-100 rounded-lg transition-colors"
+        className="ml-1 p-1 hover:bg-white/5 rounded-lg transition-colors"
       >
-        <X className="w-3.5 h-3.5 text-dark-300" />
+        <X className="w-3.5 h-3.5 text-muted-400" />
       </button>
     </div>
   );
