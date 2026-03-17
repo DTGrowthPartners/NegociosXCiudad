@@ -45,7 +45,7 @@ function randomDelay(min: number = 1500, max: number = 3000): Promise<void> {
  */
 function extractInstagramFromHtml(html: string): string | null {
   const $ = cheerio.load(html);
-  const excluded = ['explore', 'accounts', 'directory', 'about', 'legal', 'p', 'reel', 'reels', 'stories', 'tv', 'direct'];
+  const excluded = ['explore', 'accounts', 'directory', 'about', 'legal', 'p', 'reel', 'reels', 'stories', 'tv', 'direct', 'seo', 'marketing', 'developer', 'help', 'privacy', 'terms', 'press', 'api', 'brand', 'blog', 'nametag', 'login', 'lite', 'static', 'share', 'web', 'www', 'tags', 'locations', 'shop', 'store'];
 
   // Strategy 1: Look for Instagram links in common places
   const linkSelectors = [
@@ -223,7 +223,7 @@ async function fetchInstagramFromWebsite(
 
     // Strategy 1: Live DOM evaluation - catches JS-rendered links and icon-based links
     const igFromDom = await page.evaluate(() => {
-      const excluded = new Set(['explore', 'accounts', 'directory', 'about', 'legal', 'p', 'reel', 'reels', 'stories', 'tv', 'direct']);
+      const excluded = new Set(['explore', 'accounts', 'directory', 'about', 'legal', 'p', 'reel', 'reels', 'stories', 'tv', 'direct', 'seo', 'marketing', 'developer', 'help', 'privacy', 'terms', 'press', 'api', 'brand', 'blog', 'nametag', 'web', 'www', 'share', 'login', 'lite', 'static', 'tags', 'locations', 'shop', 'store']);
 
       function extractUsername(href: string): string | null {
         const m = href.match(/instagram\.com\/([a-zA-Z0-9_.]{1,30})/i);
@@ -382,7 +382,7 @@ function extractInstagramUsername(text: string): string | null {
     /@([a-zA-Z0-9_.]{1,30})(?:\s|$|"|')/,
   ];
 
-  const excluded = ['explore', 'accounts', 'directory', 'about', 'legal', 'p', 'reel', 'reels', 'stories', 'tv', 'direct', 'lite', 'static', 'developer', 'help', 'privacy', 'terms', 'press', 'api', 'brand', 'blog', 'nametag', 'web', 'www', 'share', 'login'];
+  const excluded = ['explore', 'accounts', 'directory', 'about', 'legal', 'p', 'reel', 'reels', 'stories', 'tv', 'direct', 'lite', 'static', 'developer', 'help', 'privacy', 'terms', 'press', 'api', 'brand', 'blog', 'nametag', 'web', 'www', 'share', 'login', 'seo', 'marketing', 'tags', 'locations', 'shop', 'store'];
 
   for (const pattern of patterns) {
     const match = decoded.match(pattern);
@@ -853,7 +853,7 @@ export class GoogleMapsScraper {
           const mapsHtml = await this.page.content();
           const mapsIgMatch = mapsHtml.match(/href="[^"]*instagram\.com\/([a-zA-Z0-9_.]{1,30})/i);
           if (mapsIgMatch && mapsIgMatch[1]) {
-            const excluded = ['explore', 'accounts', 'directory', 'about', 'legal', 'p', 'reel', 'reels', 'stories', 'tv', 'direct'];
+            const excluded = ['explore', 'accounts', 'directory', 'about', 'legal', 'p', 'reel', 'reels', 'stories', 'tv', 'direct', 'seo', 'marketing', 'developer', 'help', 'privacy', 'terms', 'press', 'api', 'brand', 'blog', 'nametag', 'web', 'www', 'share', 'login', 'lite', 'static', 'tags', 'locations', 'shop', 'store'];
             if (!excluded.includes(mapsIgMatch[1].toLowerCase())) {
               instagramUrl = `https://www.instagram.com/${mapsIgMatch[1]}`;
               console.log(`      ✓ Found Instagram in Maps HTML: @${mapsIgMatch[1]}`);
