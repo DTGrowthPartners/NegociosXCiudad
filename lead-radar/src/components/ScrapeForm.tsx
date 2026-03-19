@@ -21,7 +21,7 @@ const COLOMBIAN_CITIES = [
   'Buenaventura',
   'Buga',
   'Cali',
-  'Cartagena',
+  'Cartagena de Indias',
   'Cartago',
   'Chía',
   'Cúcuta',

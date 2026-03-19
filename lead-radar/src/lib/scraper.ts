@@ -408,7 +408,7 @@ async function searchInstagramMultiStrategy(
 
   // Strategy 1: Google search with site:instagram.com
   try {
-    const googleQuery = `site:instagram.com "${cleanName}" ${city}`;
+    const googleQuery = `site:instagram.com "${cleanName}" ${city} Colombia`;
     const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(googleQuery)}&num=10`;
 
     await page.goto(googleUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
@@ -441,7 +441,7 @@ async function searchInstagramMultiStrategy(
 
   // Strategy 2: DuckDuckGo search (less likely to block)
   try {
-    const ddgQuery = `${cleanName} ${city} instagram`;
+    const ddgQuery = `${cleanName} ${city} Colombia instagram`;
     const ddgUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(ddgQuery)}`;
 
     await page.goto(ddgUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
@@ -463,7 +463,7 @@ async function searchInstagramMultiStrategy(
 
   // Strategy 3: Regular Google search
   try {
-    const query = `"${cleanName}" ${city} instagram`;
+    const query = `"${cleanName}" ${city} Colombia instagram`;
     const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&num=10`;
 
     await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
@@ -503,7 +503,7 @@ async function searchInstagramMultiStrategy(
 
   // Strategy 4: Bing search as fallback
   try {
-    const bingQuery = `${cleanName} ${city} instagram`;
+    const bingQuery = `${cleanName} ${city} Colombia instagram`;
     const bingUrl = `https://www.bing.com/search?q=${encodeURIComponent(bingQuery)}`;
 
     await page.goto(bingUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
@@ -593,7 +593,7 @@ export class GoogleMapsScraper {
   ): Promise<string[]> {
     if (!this.page) throw new Error('Browser not initialized');
 
-    const query = `${category} en ${city}`;
+    const query = `${category} en ${city}, Colombia`;
     const searchUrl = `https://www.google.com/maps/search/${encodeURIComponent(query)}`;
 
     console.log(`🔍 Searching: ${query}`);
