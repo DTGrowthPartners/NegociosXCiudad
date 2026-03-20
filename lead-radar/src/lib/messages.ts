@@ -5,16 +5,14 @@ const DEFAULT_COUNTRY_CODE = process.env.DEFAULT_COUNTRY_CODE || '57';
 /**
  * Message templates for different scenarios
  */
+const UNIFIED_MESSAGE = `Hola, soy Dairo 👋 vi *{businessName}* en Google y me llamó la atención. Una pregunta rápida: ¿ya están usando publicidad en redes para atraer clientes o todo les llega por recomendación?`;
+
 const MESSAGE_TEMPLATES: Record<MessageTemplate, string> = {
-  NO_WEBSITE: `Hola, vi tu negocio "{businessName}" en {city} y me llamó la atención. Somos el equipo de Dt Growth Partners y noté que aún no tienes página web, eso hace que muchos clientes que buscan en Google no te encuentren. Ayudamos a negocios como el tuyo con páginas web profesionales, publicidad en Google y redes sociales (Facebook e Instagram Ads) y manejo de redes para que lleguen más clientes todos los días. ¿Tienes 5 minutos para que te cuente cómo podemos ayudarte a crecer?`,
-
-  NO_INSTAGRAM: `Hola, encontré tu negocio "{businessName}" en {city}. Somos el equipo de Dt Growth Partners. Vi que tienes web pero no encontré tus redes sociales activas. Hoy el 70% de los clientes descubren negocios por Instagram y Facebook. Nos encargamos del manejo de redes sociales, creación de contenido y campañas de publicidad (Facebook Ads, Instagram Ads y Google Ads) para que tu negocio llegue a más personas. ¿Te gustaría saber cómo podemos ayudarte?`,
-
-  HIGH_OPPORTUNITY: `Hola, vi "{businessName}" en {city} y noté que hay una gran oportunidad para hacer crecer tu negocio con presencia digital. Somos Dt Growth Partners y ofrecemos páginas web, manejo de redes sociales (Instagram y Facebook) y campañas de publicidad en Google Ads y Meta Ads para atraer clientes nuevos todos los días. ¿Tienes 5 minutos para que te cuente cómo lo hacemos?`,
-
-  LOW_OPPORTUNITY: `Hola, vi que "{businessName}" en {city} ya tiene web y redes sociales, eso es genial. Somos el equipo de Dt Growth Partners y trabajamos con negocios que ya tienen presencia digital ayudándolos a sacarle más provecho: optimización de campañas en Google Ads y Meta Ads, mantenimiento web, y gestión continua de redes sociales para que siempre estén generando clientes. ¿Te gustaría que revisemos cómo están rindiendo tus canales digitales?`,
-
-  GENERIC: `Hola, encontré tu negocio "{businessName}" en {city}. Somos el equipo de Dt Growth Partners y ayudamos a negocios locales a conseguir más clientes con páginas web profesionales, manejo de redes sociales y campañas de publicidad en Google y Meta (Facebook e Instagram Ads). ¿Te interesaría saber cómo podemos ayudarte a crecer?`,
+  NO_WEBSITE: UNIFIED_MESSAGE,
+  NO_INSTAGRAM: UNIFIED_MESSAGE,
+  HIGH_OPPORTUNITY: UNIFIED_MESSAGE,
+  LOW_OPPORTUNITY: UNIFIED_MESSAGE,
+  GENERIC: UNIFIED_MESSAGE,
 };
 
 /**
