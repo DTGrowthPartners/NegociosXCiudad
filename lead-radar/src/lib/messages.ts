@@ -5,7 +5,7 @@ const DEFAULT_COUNTRY_CODE = process.env.DEFAULT_COUNTRY_CODE || '57';
 /**
  * Message templates for different scenarios
  */
-const UNIFIED_MESSAGE = `Hola, soy Dairo 👋 vi *{businessName}* en Google y me llamó la atención. Una pregunta rápida: ¿ya están usando publicidad en redes para atraer clientes o todo les llega por recomendación?`;
+const UNIFIED_MESSAGE = `Hola, soy Dairo \u{1F44B} vi *{businessName}* en Google y me llam\u00F3 la atenci\u00F3n. Una pregunta r\u00E1pida: \u00BFya est\u00E1n usando publicidad en redes para atraer clientes o todo les llega por recomendaci\u00F3n?`;
 
 const MESSAGE_TEMPLATES: Record<MessageTemplate, string> = {
   NO_WEBSITE: UNIFIED_MESSAGE,
